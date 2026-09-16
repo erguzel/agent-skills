@@ -10,7 +10,7 @@ one without taking the rest.
 
 | Skill | What it does |
 | --- | --- |
-| [`repo-conduct`](skills/repo-conduct/) | A working agreement for repository sessions: when the agent acts and when it stops and asks, how claims get labelled with their evidence, and how commits are handed back to the human instead of run by the agent. |
+| [`vier-augen`](skills/vier-augen/) | A four-eyes working agreement for agentic development in a git repository: the agent works fast, the operator owns every permanent, destructive or publishing step, and the agent hands those over as commands. Invoked by name only. |
 
 ## Install
 
@@ -18,27 +18,12 @@ The [`skills` CLI](https://github.com/vercel-labs/skills) installs one skill by
 name:
 
 ```bash
-npx skills add erguzel/skills --skill repo-conduct
+npx skills add erguzel/skills --skill vier-augen
 ```
 
 `--skill '*'` takes all of them. Or copy the folder into wherever your agent
 looks for skills. Directory conventions differ between agents and change fairly
 often — check your agent's own documentation, or let the CLI place it for you.
-
-### Agents without skill support
-
-Vendor the folder into your repo and point at it from the instruction file your
-agent already reads. One line is enough:
-
-```markdown
-Follow `skills/repo-conduct/SKILL.md` for session conduct, approvals and
-commit handover.
-```
-
-That line works in `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/*.mdc`,
-`.github/copilot-instructions.md` and anything else that loads plain markdown.
-Point at the file rather than pasting its contents, so there is one copy to
-maintain.
 
 ## Layout
 

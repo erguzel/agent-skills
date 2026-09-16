@@ -1,12 +1,13 @@
-# repo-conduct
+# vier-augen
 
-A working agreement for AI agents inside a repository.
+A four-eyes working agreement for AI agents inside a git repository.
 
-It answers one question over and over: **when does the agent act, and when does
-it stop and ask?** Concretely, it sets out how a session opens, when approval is
-required before a write, how a claim gets labelled with the evidence behind it,
-when documentation is expected to move with the code, and how commits are handed
-back to the human instead of run by the agent.
+The agent does the work fast; every step that makes something permanent,
+destructive or public belongs to the operator. The agent proposes, executes
+inside the approved scope, stops at the boundary and hands over the command.
+The skill is active only when the operator invokes it by name, and using it is
+the operator's responsibility - the same way the four-eyes principle only works
+when the second pair of eyes actually looks.
 
 It is deliberately small and opinionated. One position you should agree with
 before installing:
@@ -39,8 +40,11 @@ missing file in one line and carries on with its defaults.
 
 ## Enforce it
 
-`SKILL.md` is instruction, so an agent can drift from it. The shipped hook does
-not. From the repo where the skill is installed:
+`SKILL.md` is instruction, so an agent can drift from it, and it does nothing in
+a session where it was never invoked. The shipped hook does not drift and does
+not need the skill to be loaded. For stricter protection, install it.
+`npx skills add` only places files; it does not touch your git config, by
+design. From the repo where the skill is installed:
 
 ```bash
 git config core.hooksPath <path-to-this-skill>/hooks
@@ -52,6 +56,14 @@ clone; `git commit --no-verify` bypasses it for a single commit, so treat it as
 a guardrail rather than a control. The skill tells the agent to offer this
 command on the first commit handover of a session when the config is unset, so
 you do not have to remember it.
+
+## Known risks
+
+- **Not invoked, not active.** A session that never invokes the skill runs
+  without its rules. Only installed hooks still apply.
+- **Long sessions.** When a runtime compacts or summarises a long context, the
+  skill's text can lose force along with it. No reliable mitigation is settled
+  yet.
 
 ## Files
 

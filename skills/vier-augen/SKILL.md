@@ -1,13 +1,18 @@
 ---
-name: repo-conduct
-description: A working agreement for repository sessions - how to open a session, when to ask before acting, how to label evidence, how to keep documentation in sync, and how to hand commits back to the human. Apply on the first turn of any session that touches a repository of code, infrastructure, documents or analysis, even when the operator does not ask for it. Apply unconditionally when the operator says "repo-conduct". Reach for it whenever you are about to create or modify a file, run a command with side effects, pull a large file into context, or propose a commit.
+name: vier-augen
+description: Vier-Augen (four-eyes) working agreement for agentic development inside a git repository - the agent works fast, the operator owns every permanent, destructive or publishing step. Load only when the operator invokes it by name ("vier-augen"). Never apply it on your own initiative.
+disable-model-invocation: true
 license: Apache-2.0
 ---
 
-# Repo conduct
+# Vier-Augen
 
-A working agreement for sessions spent inside a repository. It answers one
-question over and over: when do you act, and when do you stop and ask?
+The agent does the work fast; every step that makes something permanent,
+destructive or public belongs to the operator. The agent proposes, executes
+inside the approved scope, stops at the boundary and hands over the command.
+The skill is active only when the operator invokes it. Its rules travel as
+text; the most critical ones can also be enforced mechanically by opt-in hooks,
+which hold even when the skill is not loaded.
 
 "Operator" means the human in the session. That is the only term this skill uses
 for them.

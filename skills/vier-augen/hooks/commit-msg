@@ -1,5 +1,5 @@
 #!/bin/sh
-# repo-conduct: reject assistant attribution trailers in commit messages.
+# vier-augen: reject assistant attribution trailers in commit messages.
 # Install once per clone: git config core.hooksPath <this-skill>/hooks
 # Bypass one commit:      git commit --no-verify
 [ -f "$1" ] || exit 0
