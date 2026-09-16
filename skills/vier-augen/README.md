@@ -11,6 +11,13 @@ when the operator invokes it by name, and using it is
 the operator's responsibility - the same way the four-eyes principle only works
 when the second pair of eyes actually looks.
 
+## How it works
+
+Packaged as a skill, used as a working manifest. You invoke it once by name at
+the start of a session; its full text (about 4k tokens) enters the context and
+governs the whole session, instead of helping with one task and fading. It does
+not trigger on its own.
+
 It is deliberately small and opinionated. One position you should agree with
 before installing:
 
