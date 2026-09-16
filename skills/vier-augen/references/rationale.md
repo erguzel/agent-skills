@@ -180,6 +180,18 @@ check and often wrong.
 `git add .` defeats both. It is banned specifically, not as a style preference,
 and the ban holds when the operator hands the step to the agent.
 
+## Why the working tree is checked before a package
+
+A handover is path-scoped, and a path cannot split two changes that landed in
+the same file. Once a new package is written on top of uncommitted work, the
+only way to separate them is an interactive `git add -p`, which the operator
+then has to do by hand. Checking first costs one read.
+
+The more dangerous case is the operator's own work in progress. An agent that
+writes into a file the operator has half-edited mixes the two, and the operator
+may commit the mix without noticing. Staged changes count for the same reason:
+the next `git commit` takes them along.
+
 ## Why no assistant signature
 
 Trailers like `Co-Authored-By` and "Generated with" put tooling metadata into a
