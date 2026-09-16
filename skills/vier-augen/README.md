@@ -18,8 +18,7 @@ before installing:
   It hands you a path-scoped command pair and you run it, unless you hand the
   step to it by name. `git add .` is banned outright.
 
-Two more are strong defaults rather than rules, and your `AGENTS.md` can change
-either:
+Two more are defaults, and you can change either (see Configure):
 
 - **No signature on commits.** No `Co-Authored-By`, no "Generated with", no
   session links. A project that asks for attribution in writing gets it.
@@ -32,14 +31,14 @@ See [Install](../../README.md#install) in the repository README.
 
 ## Configure
 
-The skill stays generic; per-repo specifics belong in your own `AGENTS.md`.
-Whatever that file designates is authoritative and overrides the skill's
-defaults: reference files and directories, the project's commands, and the read
-budget above which the agent asks before opening a file, the language of repo
-artifacts, and whether commits carry attribution.
+The skill stays generic and names no instruction file. Per-repo specifics reach
+it through you: say them in the session, or point the agent at a file and tell
+it to follow that file - an `AGENTS.md`, a checklist, anything. What you can
+change: the read budget above which the agent asks before opening a file, the
+language of repo artifacts, whether commits carry attribution, and which
+commands (test, lint, build) the agent may run without asking.
 
-Nothing breaks if you skip this. With no `AGENTS.md`, the skill reports the
-missing file in one line and carries on with its defaults.
+Nothing breaks if you skip this; the skill runs on its defaults.
 
 ## Enforce it
 
@@ -68,8 +67,10 @@ you do not have to remember it.
   skill's text can lose force along with it. No reliable mitigation is settled
   yet.
 - **Runtime-loaded instructions.** Many agents load `AGENTS.md` or their own
-  rule files by themselves. The skill cannot stop that; it only governs what
-  the agent loads on its own initiative.
+  rule files by themselves. The skill cannot stop that, and it cannot promise to
+  outrank them; it only governs what the agent loads on its own initiative.
+  When such instructions conflict with the skill, the agent is told to name the
+  conflict and ask.
 
 ## Files
 
