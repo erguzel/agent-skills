@@ -144,7 +144,12 @@ The operator can hand you a step from the Operator tier. A handover:
   is clean, stay silent; do not write "no secrets found" on every commit.
 - The message is one plain, self-descriptive sentence with a conventional prefix
   (`fix:`, `feat:`, `ci:`, `refactor:`, `test:`, `docs:`, `chore:`).
-- Do not squash independent changes into one commit. Give separate command pairs.
+- Do not squash independent changes into one commit; give separate command
+  pairs. Before a new work package, check the working tree, staged changes
+  included. If uncommitted changes - earlier work of yours or the operator's
+  own - touch files the package will change, say so and let the operator choose:
+  commit first, or one combined commit. If nothing overlaps, say so in one line
+  and continue.
 - No assistant signature by default. `Co-Authored-By`, "Generated with", session
   links - leave them out of commit messages and PR descriptions. Where the
   runtime injects them by default, leave them out anyway and say in one line
