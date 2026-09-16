@@ -25,6 +25,10 @@ npx skills add erguzel/skills --skill vier-augen
 looks for skills. Directory conventions differ between agents and change fairly
 often — check your agent's own documentation, or let the CLI place it for you.
 
+Installing places files and nothing else. A skill that ships git hooks, agent
+adapters or CI templates documents how to switch them on in its own README -
+for `vier-augen`, see [Setup](skills/vier-augen/README.md#setup).
+
 ## Layout
 
 ```
@@ -33,6 +37,8 @@ skills/
     ├── SKILL.md            # required: frontmatter + instructions
     ├── README.md           # optional: the human-facing page for this skill
     ├── hooks/              # optional: git hooks the skill ships, opt-in
+    ├── adapters/           # optional: per-agent settings templates, opt-in
+    ├── ci/                 # optional: CI templates for your own repos, opt-in
     └── references/         # optional: read on demand, not loaded up front
 tools/
 └── validate_skills.py      # spec checks, run over every skill in CI

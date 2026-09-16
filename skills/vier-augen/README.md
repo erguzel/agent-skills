@@ -40,24 +40,127 @@ commands (test, lint, build) the agent may run without asking.
 
 Nothing breaks if you skip this; the skill runs on its defaults.
 
-## Enforce it
+## Setup
 
-`SKILL.md` is instruction, so an agent can drift from it, and it does nothing in
-a session where it was never invoked. The shipped hook does not drift and does
-not need the skill to be loaded. For stricter protection, install it.
-`npx skills add` only places files; it does not touch your git config, by
-design. From the repo where the skill is installed:
+Installing the skill places files and nothing else: `npx skills add` does not
+touch your git config or your agent's settings, by design. Protection comes in
+levels, and you switch each one on yourself.
+
+| Level | What you get | Works with |
+| --- | --- | --- |
+| 0 - Skill | The rules, as instruction, in sessions where you invoke it | Every agent that loads skills |
+| 1 - Git hooks | Attribution trailers, staged secrets and personal paths, force-push - checked by git | Every agent, and you |
+| 2 - Agent adapter | Operator-tier commands prompt you before they run | Claude Code (others to follow) |
+| 3 - CI | Attribution trailers checked on pull requests | GitHub Actions |
+
+### Level 0 - install and invoke
 
 ```bash
-git config core.hooksPath <path-to-this-skill>/hooks
+npx skills add erguzel/skills --skill vier-augen      # this project
+npx skills add erguzel/skills --skill vier-augen -g   # every project
 ```
 
-It rejects any commit message carrying an assistant attribution trailer, and
-nothing else - no language check, no message-format check. Set it once per
-clone; `git commit --no-verify` bypasses it for a single commit, so treat it as
-a guardrail rather than a control. The skill tells the agent to offer this
-command on the first commit handover of a session when the config is unset, so
-you do not have to remember it.
+A project install puts the skill inside the repository (for Claude Code,
+`.claude/skills/vier-augen/`). Commit it if everyone working in the repository
+should have it; add it to `.gitignore` if it is yours alone. Either way, invoke
+it by name at the start of a session - `/vier-augen` in Claude Code. Until you
+do, none of its rules apply.
+
+### Level 1 - git hooks
+
+From inside the repository:
+
+```bash
+sh <path-to-this-skill>/hooks/install.sh
+```
+
+| Hook | Stops |
+| --- | --- |
+| `commit-msg` | A commit message carrying an assistant attribution trailer |
+| `pre-commit` | Staged additions that look like a private key, a cloud or API token, or a personal home path. Values are never printed |
+| `pre-push` | A push that would rewrite history on the remote (force-push) |
+
+The installer never overwrites anything. For each hook that is not there yet,
+it writes a small wrapper into `.git/hooks`. Where a hook already exists, or
+where `core.hooksPath` is set - by a hook manager such as husky or lefthook, for
+example - it installs nothing for that hook and prints the line to add
+yourself:
+
+```sh
+sh "<path-to-this-skill>/hooks/pre-commit" "$@" || exit 1
+```
+
+Add that line to the existing hook - `.git/hooks/pre-commit`,
+`.husky/pre-commit`, or a `run:` entry in `lefthook.yml` - and both run. With
+the pre-commit framework, add a `repo: local` hook whose entry is
+`sh <path-to-this-skill>/hooks/pre-commit`.
+
+Things to know:
+
+- Run the installer once per clone. The wrappers point at the skill's path; if
+  you move or remove the skill, commits and pushes fail until you reinstall or
+  remove the wrappers. The hooks fail closed.
+- `--no-verify` bypasses any of them for one command. They are guardrails, not
+  controls. The agent does not use `--no-verify` unless you name it.
+- The patterns are a floor. The agent still scans the diff before it hands over
+  a commit.
+- The agent offers the installer on the first commit handover of a session when
+  the hooks are not active, so you do not have to remember it.
+
+Undo: delete the wrappers from `.git/hooks` (each one contains the word
+`vier-augen`), and remove any lines you added to other hooks.
+
+### Level 2 - agent adapter (Claude Code)
+
+Git hooks cannot tell an agent from a person, and git has no hook that runs
+before `git add`. An agent runtime can: it sees every command before it runs.
+`adapters/claude-code/` holds a template for that.
+
+- `settings.template.json`: `ask` rules for Operator-tier commands (add, commit,
+  push, switching branches, stash, reset, restore, rebase, merge, clean, `rm`,
+  publishing `gh` commands) and `deny` rules for force-push.
+- `guard.py`: a `PreToolUse` hook that catches what text rules miss - compound
+  commands, `git -C <dir> push`, git aliases, branch and tag changes,
+  `npm publish` and the like. It asks for Operator-tier steps and blocks
+  force-push. It needs `python3`.
+
+Merge the template into one of your settings files: `.claude/settings.json`
+(shared with the project), `.claude/settings.local.json` (yours) or
+`~/.claude/settings.json` (every project). Merge the `permissions` and `hooks`
+keys by hand rather than copying over an existing file. The hook command assumes
+a project install; for a global install, point it at
+`~/.claude/skills/vier-augen/adapters/claude-code/guard.py`.
+
+Answering the prompt is how you hand a step to the agent: your "yes" is the
+handover. Force-push is refused outright - run it yourself when you mean it.
+
+Things to know:
+
+- Claude Code's `bypassPermissions` mode skips permission prompts, so the `ask`
+  rules do not protect you there. The guard's force-push block still applies.
+- Rules and guard match command text. They cover the forms an agent usually
+  writes, not every possible form, and are not a security boundary.
+- Other agents have their own permission systems. Adapters for them will follow
+  once those are researched; until then, levels 0, 1 and 3 apply.
+
+Undo: remove the added `permissions` entries and the `PreToolUse` hook.
+`/permissions` in Claude Code shows the rules that are active.
+
+### Level 3 - CI
+
+Copy `ci/vier-augen.yml` to `.github/workflows/` in your repository. It fails a
+pull request whose commits carry an assistant attribution trailer - the same
+check as the `commit-msg` hook, for commits made where the hook was not
+installed.
+
+### Check the setup
+
+```bash
+hooks=$(git rev-parse --git-path hooks)
+ls "$hooks"                                   # commit-msg, pre-commit, pre-push
+printf 'test\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n' > /tmp/va-msg
+sh "$hooks/commit-msg" /tmp/va-msg            # expected: attribution trailer found
+```
 
 ## Session checkpoint
 
@@ -104,7 +207,7 @@ ask for a checkpoint whenever you want one.
 ## Known risks
 
 - **Not invoked, not active.** A session that never invokes the skill runs
-  without its rules. Only installed hooks still apply.
+  without its rules. Only the hooks and adapters you set up still apply.
 - **Long sessions.** When a runtime compacts or summarises a long context, the
   skill's text can lose force along with it. The agent watches for this and
   offers a checkpoint (see [Session checkpoint](#session-checkpoint)), but
@@ -120,7 +223,12 @@ ask for a checkpoint whenever you want one.
 | File | Purpose |
 | --- | --- |
 | [`SKILL.md`](SKILL.md) | The skill itself. Loaded in full every time it fires. |
-| [`hooks/commit-msg`](hooks/commit-msg) | Opt-in `commit-msg` hook that enforces the no-signature rule. |
+| [`hooks/commit-msg`](hooks/commit-msg) | Rejects commit messages with an assistant attribution trailer. |
+| [`hooks/pre-commit`](hooks/pre-commit) | Rejects staged additions that look like secrets or personal paths. |
+| [`hooks/pre-push`](hooks/pre-push) | Rejects pushes that rewrite remote history. |
+| [`hooks/install.sh`](hooks/install.sh) | Installs the hooks without overwriting any. |
+| [`adapters/claude-code/`](adapters/claude-code/) | Permission template and `PreToolUse` guard for Claude Code. |
+| [`ci/vier-augen.yml`](ci/vier-augen.yml) | Pull request check for your own repository. |
 | [`references/rationale.md`](references/rationale.md) | Why the sharper rules are shaped the way they are. Read on demand. |
 
 ## Contributing
