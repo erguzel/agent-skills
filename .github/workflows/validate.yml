@@ -1,0 +1,38 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/validate_skills.py
+
+  commit-messages:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No assistant attribution
+        run: |
+          range="${{ github.event.pull_request.base.sha }}..HEAD"
+          if git log --format=%B "$range" | grep -inE 'noreply@(anthropic|openai|google)\.com|claude\.ai/code|^Claude-Session:|generated with \['; then
+            echo "::error::assistant attribution trailer in a commit message"
+            exit 1
+          fi
+      - name: Commit messages are English
+        run: |
+          range="${{ github.event.pull_request.base.sha }}..HEAD"
+          if git log --format=%B "$range" | grep -nE '[ğşıĞŞİ]'; then
+            echo "::error::commit message contains Turkish-specific characters"
+            exit 1
+          fi
