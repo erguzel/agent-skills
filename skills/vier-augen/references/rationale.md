@@ -164,6 +164,16 @@ link, a marker line. The test file holds both sides - lines that must be
 blocked and lines that must pass - so a new pattern that catches a person fails
 before it ships.
 
+## Why reference IDs are grouped by theme
+
+A session that keeps a decision log in the chat produces dozens of items. A
+single flat counter keeps every ID unique, but it scatters the items of one
+topic across the number range, and the reader loses which question belongs to
+which subject. A theme prefix with a short hint keeps the group visible and the
+numbers small, and because the prefix is always written, `M1-Q1` and `M2-Q1`
+never collide. The label on later mentions exists for the same reason as the
+hint: an ID the operator has to scroll back for is not doing its job.
+
 ## Why the adapter asks instead of denying
 
 A `deny` rule would make the Operator tier absolute again: the operator could

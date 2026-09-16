@@ -197,7 +197,8 @@ this in one line at the end of a turn and proposes a new session.
 
 **What it writes.** `.ai/eigenkontext.md` at the repo root, unless you name
 another path: the goal, the decisions and who made them, what is done (with
-commit hashes), what is open, the next step, and the files in play. No secrets,
+commit hashes), what is open with its reference IDs, the next step, and the
+files in play. No secrets,
 no transcript. It is written in the language you work with the agent in,
 because it continues that conversation and never lands in the repo's history.
 
@@ -218,6 +219,22 @@ any other.
 no count, the agent is estimating from session length, and no signal reliably
 catches compaction before it happens. Keep an eye on long sessions yourself, and
 ask for a checkpoint whenever you want one.
+
+## Reference IDs
+
+The agent tags what you may want to come back to - proposals (P), decisions
+for you (D), open items (O), questions (Q). A larger topic gets a theme with a
+short hint, and its items are numbered within it:
+
+```
+**M1(cost)-Q1** — where does the hook path point after a global install?
+...
+hook path (M1-Q1) → resolved
+```
+
+Later mentions carry a short label instead of the bare ID, so you do not have
+to scroll back. The checkpoint keeps the counters, so a new session continues
+them.
 
 ## Known risks
 
