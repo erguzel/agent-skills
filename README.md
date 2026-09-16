@@ -46,6 +46,9 @@ skills/
 tools/
 ├── validate_skills.py      # spec checks, run over every skill in CI
 └── test_attribution.py     # tests for the vier-augen attribution patterns
+tests/
+└── vier-augen/
+    └── scenarios.md        # behaviour scenarios, run by hand in an agent
 .github/workflows/
 └── validate.yml            # runs the validator on every push and pull request
 AGENTS.md                   # how agents should behave inside THIS repo
@@ -77,8 +80,9 @@ python tools/validate_skills.py
 Checks every skill folder under `skills/`: that it holds a `SKILL.md`, that the
 frontmatter parses and carries the required fields, that `name` matches the
 directory and the field limits hold, that the body stays inside the 500-line
-budget, and that every relative link in `SKILL.md` resolves. CI runs it on every
-push and pull request.
+budget, that every relative link in `SKILL.md` resolves, that every shipped
+script with a shebang is executable, and that every shipped JSON file parses. CI
+runs it on every push and pull request.
 
 ```bash
 python tools/test_attribution.py
