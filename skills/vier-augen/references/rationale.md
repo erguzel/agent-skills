@@ -154,6 +154,25 @@ without a list - is handed over instead. Deletion is judged by effect:
 overwriting a file with `>` or moving another file onto it loses the same content
 as `rm`.
 
+## Why the adapter asks instead of denying
+
+A `deny` rule would make the Operator tier absolute again: the operator could
+not hand a step over even when they want to. An `ask` rule puts the decision in
+front of the person at the moment it matters, and answering it is the handover.
+Force-push is the exception. The skill never proposes a rewrite of published
+history, so refusing it outright costs the operator one command typed by hand
+and saves them from approving one by reflex.
+
+## Why the installer never overwrites a hook
+
+Git runs one file per hook name, and many repositories already use that file -
+directly, or through a hook manager that sets `core.hooksPath`. Pointing
+`core.hooksPath` at this skill, as an earlier version suggested, silently
+switched those hooks off. Wrapping or editing another hook would change a file
+the operator did not ask anyone to touch. So the installer only fills empty
+slots and, everywhere else, prints the one line that lets both run, leaving the
+edit to the operator.
+
 ## Why intent narration is banned
 
 "Let me take a look at that file" costs a sentence and tells the operator nothing
