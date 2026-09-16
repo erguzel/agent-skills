@@ -14,8 +14,9 @@ when the second pair of eyes actually looks.
 It is deliberately small and opinionated. One position you should agree with
 before installing:
 
-- **The agent never runs `git add`, `git commit` or `git push`.** It hands you a
-  path-scoped command pair and you run it. `git add .` is banned outright.
+- **The agent does not run `git add`, `git commit` or `git push` on its own.**
+  It hands you a path-scoped command pair and you run it, unless you hand the
+  step to it by name. `git add .` is banned outright.
 
 Two more are strong defaults rather than rules, and your `AGENTS.md` can change
 either:
