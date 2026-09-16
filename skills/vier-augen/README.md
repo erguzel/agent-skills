@@ -83,7 +83,7 @@ sh <path-to-this-skill>/hooks/install.sh
 
 | Hook | Stops |
 | --- | --- |
-| `commit-msg` | A commit message carrying an assistant attribution trailer |
+| `commit-msg` | A commit message carrying assistant attribution (a trailer, session link or marker), or a coding agent as author or committer |
 | `pre-commit` | Staged additions that look like a private key, a cloud or API token, or a personal home path. Values are never printed |
 | `pre-push` | A push that would rewrite history on the remote (force-push) |
 
@@ -111,6 +111,10 @@ Things to know:
   controls. The agent does not use `--no-verify` unless you name it.
 - The patterns are a floor. The agent still scans the diff before it hands over
   a commit.
+- The attribution patterns live in `hooks/attribution/` and match agents'
+  addresses, bot accounts and markers rather than names, so a co-author called
+  Claude still gets through. To extend them, edit those files; if you use the
+  CI template, update its embedded copy too.
 - The agent offers the installer on the first commit handover of a session when
   the hooks are not active, so you do not have to remember it.
 
@@ -156,9 +160,10 @@ Undo: remove the added `permissions` entries and the `PreToolUse` hook.
 ### Level 3 - CI
 
 Copy `ci/vier-augen.yml` to `.github/workflows/` in your repository. It fails a
-pull request whose commits carry an assistant attribution trailer - the same
-check as the `commit-msg` hook, for commits made where the hook was not
-installed.
+pull request when a commit message or the pull request description carries
+assistant attribution, or when a coding agent is a commit's author or
+committer. It uses the same patterns as the `commit-msg` hook, embedded in the
+file, and catches commits made where the hook was not installed.
 
 ### Check the setup
 
@@ -230,7 +235,8 @@ ask for a checkpoint whenever you want one.
 | File | Purpose |
 | --- | --- |
 | [`SKILL.md`](SKILL.md) | The skill itself. Loaded in full every time it fires. |
-| [`hooks/commit-msg`](hooks/commit-msg) | Rejects commit messages with an assistant attribution trailer. |
+| [`hooks/commit-msg`](hooks/commit-msg) | Rejects assistant attribution in commit messages and agent identities as author or committer. |
+| [`hooks/attribution/`](hooks/attribution/) | The attribution patterns, shared by the hook and the CI template. |
 | [`hooks/pre-commit`](hooks/pre-commit) | Rejects staged additions that look like secrets or personal paths. |
 | [`hooks/pre-push`](hooks/pre-push) | Rejects pushes that rewrite remote history. |
 | [`hooks/install.sh`](hooks/install.sh) | Installs the hooks without overwriting any. |

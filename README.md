@@ -41,7 +41,8 @@ skills/
     ├── ci/                 # optional: CI templates for your own repos, opt-in
     └── references/         # optional: read on demand, not loaded up front
 tools/
-└── validate_skills.py      # spec checks, run over every skill in CI
+├── validate_skills.py      # spec checks, run over every skill in CI
+└── test_attribution.py     # tests for the vier-augen attribution patterns
 .github/workflows/
 └── validate.yml            # runs the validator on every push and pull request
 AGENTS.md                   # how agents should behave inside THIS repo
@@ -74,6 +75,14 @@ frontmatter parses and carries the required fields, that `name` matches the
 directory and the field limits hold, that the body stays inside the 500-line
 budget, and that every relative link in `SKILL.md` resolves. CI runs it on every
 push and pull request.
+
+```bash
+python tools/test_attribution.py
+```
+
+Runs the `vier-augen` attribution patterns against messages and identities that
+must be blocked or let through, and checks that the copy embedded in the CI
+template matches the pattern files. CI runs it too.
 
 ## Contributing
 

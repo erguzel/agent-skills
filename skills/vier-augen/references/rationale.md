@@ -154,6 +154,16 @@ without a list - is handed over instead. Deletion is judged by effect:
 overwriting a file with `>` or moving another file onto it loses the same content
 as `rm`.
 
+## Why the attribution patterns match agents, not names
+
+People are called Claude, and some coding agents add the human who asked for
+the work as a co-author. A pattern that rejects every `Co-authored-by` line, or
+every line containing an agent's name, blocks real people. So the patterns key
+on what only an agent produces: its service address, its bot account, a session
+link, a marker line. The test file holds both sides - lines that must be
+blocked and lines that must pass - so a new pattern that catches a person fails
+before it ships.
+
 ## Why the adapter asks instead of denying
 
 A `deny` rule would make the Operator tier absolute again: the operator could
