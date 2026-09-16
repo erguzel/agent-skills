@@ -1,8 +1,6 @@
 # AGENTS.md
 
 This repository publishes Agent Skills, one folder per skill under `skills/`.
-Follow `skills/repo-conduct/SKILL.md` for session conduct, approvals and
-commit handover while working here.
 
 ## Conventions
 
@@ -18,4 +16,4 @@ commit handover while working here.
 
 - Validate: `python tools/validate_skills.py`
 - Enable commit hooks (once per clone):
-  `git config core.hooksPath skills/repo-conduct/hooks`
+  `git config core.hooksPath skills/vier-augen/hooks`
