@@ -1,0 +1,17 @@
+# vier-augen: agent identities as commit author or committer.
+# Matched case-insensitively against "Name <email>".
+
+# GitHub bot accounts of coding agents
+(claude|copilot-swe-agent|devin-ai-integration|google-labs-jules|chatgpt-codex-connector)\[bot\]
+[0-9]+\+copilot@users\.noreply\.github\.com
+
+# Agent service addresses
+noreply@anthropic\.com
+noreply@openai\.com
+cursoragent@cursor\.com
+aider@aider\.chat
+amp@ampcode\.com
+noreply@opencode\.ai
+
+# Aider appends "(aider)" to the author name
+\(aider\) <

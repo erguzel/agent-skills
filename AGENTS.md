@@ -15,5 +15,6 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
 ## Commands
 
 - Validate: `python tools/validate_skills.py`
+- Test attribution patterns: `python tools/test_attribution.py`
 - Enable commit hooks (once per clone):
   `git config core.hooksPath skills/vier-augen/hooks`

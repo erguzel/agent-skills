@@ -1,5 +1,7 @@
 # vier-augen: pull request checks for your own repository.
 # Copy to .github/workflows/vier-augen.yml. Opt-in, like the git hooks.
+# The embedded patterns are copies of hooks/attribution/*.ere in the skill;
+# the skill's own tests keep them identical.
 name: vier-augen
 
 on:
@@ -12,12 +14,80 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: No assistant attribution in commit messages
+      - name: No assistant attribution
+        env:
+          RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
-          if git log --format=%B "$range" | grep -inE \
-            'noreply@(anthropic|openai|google)\.com|claude\.ai/code|^Claude-Session:|generated with \[|^Co-Authored-By: *(Claude|GPT|Copilot|Cursor|Codex|Gemini|Devin)'
-          then
-            echo "::error::assistant attribution trailer in a commit message"
-            exit 1
+          cat > "$RUNNER_TEMP/message.ere" <<'VIER_AUGEN_MESSAGE'
+          # vier-augen: attribution in commit messages and pull request descriptions.
+          # One extended regular expression per line, matched case-insensitively per line.
+          # Match an agent's address, link or marker - never a plain name, since people
+          # are called Claude or Amp too.
+
+          # Claude Code
+          co-authored-by:.*<noreply@anthropic\.com>
+          ^claude-session:
+          claude\.ai/code/session_
+          generated with \[claude code\]
+
+          # OpenAI Codex
+          co-authored-by:.*<noreply@openai\.com>
+          chatgpt\.com/codex/tasks/
+
+          # GitHub Copilot
+          co-authored-by:.*<copilot@github\.com>
+          co-authored-by:.*[0-9]+\+copilot(\[bot\])?@users\.noreply\.github\.com
+
+          # Cursor
+          co-authored-by:.*<cursoragent@cursor\.com>
+          ^made-with: *cursor
+
+          # Aider
+          co-authored-by:.*<aider@aider\.chat>
+          ^aider:[[:space:]]
+
+          # Amp
+          ^amp-thread(-id)?:
+          co-authored-by:.*<amp@ampcode\.com>
+
+          # OpenCode
+          co-authored-by:.*<noreply@opencode\.ai>
+          generated with \[?opencode
+
+          # Coding-agent bot accounts added as co-authors
+          co-authored-by:.*(claude|copilot-swe-agent|devin-ai-integration|google-labs-jules|chatgpt-codex-connector)\[bot\]
+          VIER_AUGEN_MESSAGE
+          cat > "$RUNNER_TEMP/identity.ere" <<'VIER_AUGEN_IDENTITY'
+          # vier-augen: agent identities as commit author or committer.
+          # Matched case-insensitively against "Name <email>".
+
+          # GitHub bot accounts of coding agents
+          (claude|copilot-swe-agent|devin-ai-integration|google-labs-jules|chatgpt-codex-connector)\[bot\]
+          [0-9]+\+copilot@users\.noreply\.github\.com
+
+          # Agent service addresses
+          noreply@anthropic\.com
+          noreply@openai\.com
+          cursoragent@cursor\.com
+          aider@aider\.chat
+          amp@ampcode\.com
+          noreply@opencode\.ai
+
+          # Aider appends "(aider)" to the author name
+          \(aider\) <
+          VIER_AUGEN_IDENTITY
+          patterns() { grep -v -e '^#' -e '^[[:space:]]*$' "$RUNNER_TEMP/$1"; }
+          msg=$(patterns message.ere)
+          ids=$(patterns identity.ere)
+          fail=0
+          if git log --format=%B "$RANGE" | grep -inE -e "$msg"; then
+            echo "::error::assistant attribution in a commit message"; fail=1
           fi
+          if git log --format='%an <%ae>%n%cn <%ce>' "$RANGE" | grep -iE -e "$ids"; then
+            echo "::error::coding-agent identity as commit author or committer"; fail=1
+          fi
+          if printf '%s\n' "$PR_BODY" | grep -inE -e "$msg"; then
+            echo "::error::assistant attribution in the pull request description"; fail=1
+          fi
+          exit "$fail"

@@ -1,0 +1,37 @@
+# vier-augen: attribution in commit messages and pull request descriptions.
+# One extended regular expression per line, matched case-insensitively per line.
+# Match an agent's address, link or marker - never a plain name, since people
+# are called Claude or Amp too.
+
+# Claude Code
+co-authored-by:.*<noreply@anthropic\.com>
+^claude-session:
+claude\.ai/code/session_
+generated with \[claude code\]
+
+# OpenAI Codex
+co-authored-by:.*<noreply@openai\.com>
+chatgpt\.com/codex/tasks/
+
+# GitHub Copilot
+co-authored-by:.*<copilot@github\.com>
+co-authored-by:.*[0-9]+\+copilot(\[bot\])?@users\.noreply\.github\.com
+
+# Cursor
+co-authored-by:.*<cursoragent@cursor\.com>
+^made-with: *cursor
+
+# Aider
+co-authored-by:.*<aider@aider\.chat>
+^aider:[[:space:]]
+
+# Amp
+^amp-thread(-id)?:
+co-authored-by:.*<amp@ampcode\.com>
+
+# OpenCode
+co-authored-by:.*<noreply@opencode\.ai>
+generated with \[?opencode
+
+# Coding-agent bot accounts added as co-authors
+co-authored-by:.*(claude|copilot-swe-agent|devin-ai-integration|google-labs-jules|chatgpt-codex-connector)\[bot\]
