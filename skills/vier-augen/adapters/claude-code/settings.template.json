@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git stash *)",
+      "Bash(git reset *)",
+      "Bash(git restore *)",
+      "Bash(git rebase *)",
+      "Bash(git merge *)",
+      "Bash(git cherry-pick *)",
+      "Bash(git clean *)",
+      "Bash(rm *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh release create *)",
+      "Bash(gh api *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * -f*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/skills/vier-augen/adapters/claude-code/guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
