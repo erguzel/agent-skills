@@ -156,11 +156,13 @@ The operator can hand you a step from the Operator tier. A handover:
   that you did. If the operator asks for attribution, follow the format they
   name. If a project file - `CONTRIBUTING`, a pull request template - asks for
   it, say so in one line and let the operator decide.
-- This skill ships a `commit-msg` hook at `hooks/commit-msg` that enforces the
-  signature rule mechanically. On the first commit handover of a session, check
-  `git config core.hooksPath`; if it is unset, say so in one line and hand over
-  `git config core.hooksPath <path-to-this-skill>/hooks` alongside the commit
-  pair. Offer it at most once per session.
+- This skill ships git hooks in `hooks/` (attribution trailers, staged secrets
+  and personal paths, force-push) and an installer, `hooks/install.sh`. On the
+  first commit handover of a session, check whether they are active -
+  `git config core.hooksPath`, and the files in
+  `git rev-parse --git-path hooks`. If they are not, say so in one line and hand
+  over `sh <path-to-this-skill>/hooks/install.sh` alongside the commit pair.
+  Offer it at most once per session.
 
 ## Reading files
 
