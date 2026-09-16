@@ -14,8 +14,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: python tools/validate_skills.py
+      - run: python tools/test_attribution.py
 
-  commit-messages:
+  attribution:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -23,16 +24,22 @@ jobs:
         with:
           fetch-depth: 0
       - name: No assistant attribution
+        env:
+          RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          range="${{ github.event.pull_request.base.sha }}..HEAD"
-          if git log --format=%B "$range" | grep -inE 'noreply@(anthropic|openai|google)\.com|claude\.ai/code|^Claude-Session:|generated with \['; then
-            echo "::error::assistant attribution trailer in a commit message"
-            exit 1
+          dir=skills/vier-augen/hooks/attribution
+          patterns() { grep -v -e '^#' -e '^[[:space:]]*$' "$dir/$1"; }
+          msg=$(patterns message.ere)
+          ids=$(patterns identity.ere)
+          fail=0
+          if git log --format=%B "$RANGE" | grep -inE -e "$msg"; then
+            echo "::error::assistant attribution in a commit message"; fail=1
           fi
-      - name: Commit messages are English
-        run: |
-          range="${{ github.event.pull_request.base.sha }}..HEAD"
-          if git log --format=%B "$range" | grep -nE '[ğşıĞŞİ]'; then
-            echo "::error::commit message contains Turkish-specific characters"
-            exit 1
+          if git log --format='%an <%ae>%n%cn <%ce>' "$RANGE" | grep -iE -e "$ids"; then
+            echo "::error::coding-agent identity as commit author or committer"; fail=1
           fi
+          if printf '%s\n' "$PR_BODY" | grep -inE -e "$msg"; then
+            echo "::error::assistant attribution in the pull request description"; fail=1
+          fi
+          exit "$fail"
