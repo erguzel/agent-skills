@@ -5,7 +5,9 @@ A four-eyes working agreement for AI agents inside a git repository.
 The agent does the work fast; every step that makes something permanent,
 destructive or public belongs to the operator. The agent proposes, executes
 inside the approved scope, stops at the boundary and hands over the command.
-The skill is active only when the operator invokes it by name, and using it is
+What instructions the agent works under - skills, agent files, anything that
+steers its behaviour - is also the operator's call. The skill is active only
+when the operator invokes it by name, and using it is
 the operator's responsibility - the same way the four-eyes principle only works
 when the second pair of eyes actually looks.
 
@@ -64,6 +66,9 @@ you do not have to remember it.
 - **Long sessions.** When a runtime compacts or summarises a long context, the
   skill's text can lose force along with it. No reliable mitigation is settled
   yet.
+- **Runtime-loaded instructions.** Many agents load `AGENTS.md` or their own
+  rule files by themselves. The skill cannot stop that; it only governs what
+  the agent loads on its own initiative.
 
 ## Files
 
