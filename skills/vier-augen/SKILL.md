@@ -10,7 +10,9 @@ license: Apache-2.0
 The agent does the work fast; every step that makes something permanent,
 destructive or public belongs to the operator. The agent proposes, executes
 inside the approved scope, stops at the boundary and hands over the command.
-The skill is active only when the operator invokes it. Its rules travel as
+What instructions the agent works under - skills, agent files, anything that
+steers its behaviour - is also the operator's call. The skill is active only
+when the operator invokes it. Its rules travel as
 text; the most critical ones can also be enforced mechanically by opt-in hooks,
 which hold even when the skill is not loaded.
 
