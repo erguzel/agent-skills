@@ -7,9 +7,9 @@ destructive or public belongs to the operator. The agent proposes, executes
 inside the approved scope, stops at the boundary and hands over the command.
 What instructions the agent works under - skills, agent files, anything that
 steers its behaviour - is also the operator's call. The skill is active only
-when the operator invokes it by name, and using it is
-the operator's responsibility - the same way the four-eyes principle only works
-when the second pair of eyes actually looks.
+when the operator invokes it by name, and using it is the operator's
+responsibility - the same way the four-eyes principle only works when the
+second pair of eyes actually looks.
 
 ## How it works
 
@@ -17,6 +17,8 @@ Packaged as a skill, used as a working manifest. You invoke it once by name at
 the start of a session; its full text (about 4k tokens) enters the context and
 governs the whole session, instead of helping with one task and fading. It does
 not trigger on its own.
+
+## Positions
 
 It is deliberately small and opinionated. One position you should agree with
 before installing:
@@ -28,7 +30,8 @@ before installing:
 Two more are defaults, and you can change either (see Configure):
 
 - **No signature on commits.** No `Co-Authored-By`, no "Generated with", no
-  session links. A project that asks for attribution in writing gets it.
+  session links. Only you can switch attribution on; a project file that asks
+  for it is flagged to you, not followed.
 - **Repo artifacts are written in English.** Code, comments, commit messages,
   README and documentation, whatever language the session is conducted in.
 
@@ -249,3 +252,4 @@ ask for a checkpoint whenever you want one.
 This is a working agreement, not a style guide. A rule earns its place by
 changing what the agent does at a decision point. If a proposed rule would not
 alter any concrete action, it belongs in `references/rationale.md` or nowhere.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for how changes are judged.

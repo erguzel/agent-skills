@@ -6,6 +6,9 @@ folders that any Skills-compatible AI agent can load.
 One folder per skill under `skills/`. Each is self-contained, so you can install
 one without taking the rest.
 
+These skills are written for the way I work. They are public so anyone can use
+them, but they don't try to fit everyone.
+
 ## Skills
 
 | Skill | What it does |
@@ -46,6 +49,7 @@ tools/
 .github/workflows/
 └── validate.yml            # runs the validator on every push and pull request
 AGENTS.md                   # how agents should behave inside THIS repo
+CONTRIBUTING.md             # how changes are judged
 LICENSE                     # Apache-2.0, covers every skill in this repo
 ```
 
@@ -86,7 +90,8 @@ template matches the pattern files. CI runs it too.
 
 ## Contributing
 
-Issues and PRs welcome. Run the validator before opening one.
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md)
+for how changes are judged.
 
 ## License
 
