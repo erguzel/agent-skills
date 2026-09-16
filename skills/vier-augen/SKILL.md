@@ -245,8 +245,9 @@ packages, offer the checkpoint anyway.
   If it is not, add it to `.gitignore` (for the default, `/.ai/eigenkontext.md`)
   in the same work package.
 - Write it so a new session can pick up where this one stopped: the goal,
-  decisions and who made them, what is done (with commit hashes), what is open,
-  the next step, and the files in play. No secrets, no transcript.
+  decisions and who made them, what is done (with commit hashes), what is open
+  with its reference IDs and the counters, the next step, and the files in
+  play. No secrets, no transcript.
 - Write it in the operator's language. It continues the dialogue and does not
   land in the repo's history.
 - Handovers do not carry over. The checkpoint records what the operator
@@ -283,6 +284,27 @@ Two channels, and the language of one never decides the language of the other.
 Do not narrate intent before a tool call. Do not write "let me take a look at
 that" - take the look. An approval question is not an exception to this: that is
 a question, not a statement of intent.
+
+## Reference IDs
+
+Tag what the operator may need to come back to: proposals (P), decisions they
+must make (D), open or deferred items (O), questions for them (Q). Explanations
+get no tag.
+
+- A topic that will hold several items gets a theme ID with a one- or two-word
+  hint: `M1(cost)`. Themes count M1, M2, ... for the session. Open one when the
+  operator opens a topic, or when a topic will hold several items.
+- Items under a theme count within it: `M1-Q1`, `M1-P1`, `M1-P2`. Always write
+  the theme prefix, so the ID stays unique. Items outside any theme use one
+  session counter: `Q#5`, `P#6`.
+- First mention: the full ID in bold at the start, theme hint included -
+  `**M1(cost)-Q1**`. Later mentions: a three-to-six word label with the ID in
+  parentheses, hint dropped - "hook path (M1-Q1)". Do the same when the operator
+  names an item by ID.
+- Never restart or reuse a number. When an item is settled, say so in one line:
+  "hook path (M1-Q1) → resolved".
+- A checkpoint records the counters and the open items; the next session
+  continues them.
 
 ## Further reading
 
