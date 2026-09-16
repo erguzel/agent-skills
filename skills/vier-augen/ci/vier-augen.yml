@@ -1,0 +1,23 @@
+# vier-augen: pull request checks for your own repository.
+# Copy to .github/workflows/vier-augen.yml. Opt-in, like the git hooks.
+name: vier-augen
+
+on:
+  pull_request:
+
+jobs:
+  attribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No assistant attribution in commit messages
+        run: |
+          range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          if git log --format=%B "$range" | grep -inE \
+            'noreply@(anthropic|openai|google)\.com|claude\.ai/code|^Claude-Session:|generated with \[|^Co-Authored-By: *(Claude|GPT|Copilot|Cursor|Codex|Gemini|Devin)'
+          then
+            echo "::error::assistant attribution trailer in a commit message"
+            exit 1
+          fi
