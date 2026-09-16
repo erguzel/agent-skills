@@ -12,12 +12,16 @@ Per skill directory:
   - no angle brackets anywhere in frontmatter (they can inject into the prompt)
   - the body stays under the recommended 500-line budget
   - every relative link in SKILL.md resolves to a file that exists
+  - every file in the skill that starts with a shebang is executable
+  - every JSON file in the skill parses
 
 Exit code 1 on any failure. No third-party dependencies.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -109,13 +113,33 @@ def check_body(text: str, skill_md: Path) -> list[str]:
     return errors
 
 
+def check_files(skill_dir: Path) -> list[str]:
+    """Checks on the files a skill ships besides SKILL.md."""
+    errors: list[str] = []
+    for path in sorted(p for p in skill_dir.rglob("*") if p.is_file()):
+        if "__pycache__" in path.parts:
+            continue
+        rel = path.relative_to(skill_dir)
+        with path.open("rb") as handle:
+            shebang = handle.read(2) == b"#!"
+        if shebang and not os.access(path, os.X_OK):
+            errors.append(f"{rel} has a shebang but is not executable")
+        if path.suffix == ".json":
+            try:
+                json.loads(path.read_text(encoding="utf-8"))
+            except ValueError as exc:
+                errors.append(f"{rel} is not valid JSON: {exc}")
+    return errors
+
+
 def validate(skill_dir: Path) -> list[str]:
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.is_file():
         return ["no SKILL.md in this skill directory"]
 
     text = skill_md.read_text(encoding="utf-8")
-    return check_frontmatter(text, skill_md) + check_body(text, skill_md)
+    return (check_frontmatter(text, skill_md) + check_body(text, skill_md)
+            + check_files(skill_dir))
 
 
 def main() -> int:
