@@ -217,6 +217,35 @@ Shared rules:
   the proposed line change.
 - If the operator says to leave it for now, drop it for the rest of the session.
 
+## Session checkpoint
+
+A long session loses detail when the runtime compacts it, and a checkpoint
+written after that is built from the summary. So check early: at every commit
+handover, and whenever the operator asks, look for a context signal - a token or
+context count your runtime shows you, a warning that context is running low, or
+a summary standing in for earlier turns. When roughly a fifth of the context or
+less is left (unless the operator names another threshold), or a summary has
+already replaced earlier turns, say so in one line at the end of the turn and
+propose a new session with a checkpoint. If your runtime shows no such signal,
+say so once and let the length of the session stand in: after several work
+packages, offer the checkpoint anyway.
+
+- The checkpoint is `.ai/eigenkontext.md` at the repo root, unless the operator
+  names another path. Writing it is Approval tier. If the file does not exist,
+  ask before creating it; if it exists, say that the old checkpoint will be
+  replaced and cannot be recovered.
+- Before the first write, check that the path is ignored (`git check-ignore`).
+  If it is not, add it to `.gitignore` (for the default, `/.ai/eigenkontext.md`)
+  in the same work package.
+- Write it so a new session can pick up where this one stopped: the goal,
+  decisions and who made them, what is done (with commit hashes), what is open,
+  the next step, and the files in play. No secrets, no transcript.
+- Write it in the operator's language. It continues the dialogue and does not
+  land in the repo's history.
+- Handovers do not carry over. The checkpoint records what the operator
+  decided; it grants nothing in the next session.
+- A new session reads the checkpoint only when the operator says to.
+
 ## Verification
 
 - Label a claim at the level of evidence you actually have. "It imports and the
