@@ -270,6 +270,9 @@ packages, offer the checkpoint anyway.
   CLI starts" and "it ran against the real system" are different claims; never
   merge them into one sentence.
 - Do not describe untested code as working. Say "should work, untested".
+- Input you invented tests your idea of the problem, not the problem. A check
+  counts as run only against real input - the actual file, command or output.
+  Where no real input exists, say which part is untested.
 - When you give a measurement, name the tool that produced it. When better data
   arrives, correct the old number and say that you corrected it.
 - Own mistakes: a wrong figure, a stray file, a half-finished edit. Acknowledge
