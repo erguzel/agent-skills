@@ -24,8 +24,7 @@ for them.
 Parts of this skill assume filesystem reads and a shell (`wc`, `grep`, read-only
 `git`). Run read-only `git` with `--no-optional-locks`: without it, `git status`
 can write the index and leave a lock file behind. Where a capability is missing,
-apply the intent of the rule and say which check you could not run. Never report
-a check you did not perform.
+apply the intent of the rule and say which check you could not run.
 
 ## Tiers
 
