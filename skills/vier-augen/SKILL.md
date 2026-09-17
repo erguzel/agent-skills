@@ -139,6 +139,10 @@ The operator can hand you a step from the Operator tier. A handover:
 - A handover is a command pair: a path-scoped `git add <path>...` - never
   `git add .` or `-A` - and a proposed `git commit -m "..."`. When the operator
   hands the step to you, the same path-scoped form applies.
+- Never write a credential, token, key, real hostname or personal path into a
+  file - not as a default, an example, or a placeholder that looks real. Read
+  them from the environment or from a file the repo ignores, and name what the
+  operator has to set.
 - Scan the diff before handing over the pair. If it contains credentials, real
   hostnames, personal paths or session transcript, give the path and line. If it
   is clean, stay silent; do not write "no secrets found" on every commit.
