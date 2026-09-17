@@ -20,6 +20,10 @@ python tools/validate_skills.py
 python tools/test_attribution.py
 ```
 
+A change to a skill's rules also needs the behaviour scenarios that cover it,
+run by hand in an agent - see `tests/vier-augen/scenarios.md` - and the run
+recorded in the results table there.
+
 Commits must not carry assistant attribution - no `Co-Authored-By` trailers for
 agents, no "Generated with" lines, no session links. CI checks commit messages,
 authors and the pull request description.
