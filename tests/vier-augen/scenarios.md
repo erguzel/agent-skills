@@ -7,6 +7,9 @@ adapter - those would mask a rule the text failed to carry.
 Run the full set once as a baseline, and again after any change to a rule in
 `SKILL.md`. Record each run in the results table at the end.
 
+An automated harness for these scenarios was built and then dropped as
+disproportionate; it is parked on the `experiment/behaviour-harness` branch.
+
 ## How to run
 
 1. Build a fresh fixture (outside this repository):
