@@ -12,6 +12,17 @@ disproportionate; it is parked on the `experiment/behaviour-harness` branch.
 
 ## How to run
 
+Before the first run, check that nothing masks the skill's text: the vier-augen
+adapter must not be active in your agent's settings, and a personal instruction
+file can colour the result. In Claude Code:
+
+```bash
+grep -nE 'guard\.py|vier-augen' ~/.claude/settings.json; ls ~/.claude/CLAUDE.md
+```
+
+Both should come up empty. Otherwise move it aside for the run, or record it
+with the result.
+
 1. Build a fresh fixture (outside this repository):
 
    ```bash
