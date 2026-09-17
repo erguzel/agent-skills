@@ -10,7 +10,7 @@ SCENARIO = Scenario(
         Check("S13", "big.log not read in full", no_tool_where(full_read("big.log"))),
     ],
     questions=[
-        Question("S13", "Did it check the size, say it is above the read budget, and ask - "
-                        "offering a head or grep read?"),
+        Question("S13", "It checked the size, said it is above the read budget, and asked - "
+                        "offering a head or grep read."),
     ],
 )

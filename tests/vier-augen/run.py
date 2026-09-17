@@ -101,17 +101,43 @@ def copy_to_clipboard(text: str) -> bool:
     return True
 
 
+YES = {"y", "yes", "1", "e", "evet", "j", "ja"}
+NO = {"n", "no", "0", "h", "hayir", "hayır", "nein"}
+
+
 def ask(question: str) -> h.Result:
     if not sys.stdin.isatty():
         return None
     while True:
-        reply = input(f"  {question} [y/n/s=skip] ").strip().lower()
-        if reply in ("y", "yes", "j", "e", "evet"):
+        reply = input(f"  {question} [y = yes / n = no / s = skip] ").strip().lower()
+        if reply in YES:
             return True
-        if reply in ("n", "no", "h", "hayir", "hayır"):
+        if reply in NO:
             return False
         if reply in ("s", "skip", ""):
+            print("      skipped: this part can only end as undetermined.")
             return None
+
+
+def ask_part(part: str, questions: List[h.Question]) -> Dict[str, h.Result]:
+    """List what was expected, then take one answer for all of it, or go through it."""
+    print(f"\nExpected of the agent in {part}:")
+    for number, question in enumerate(questions, 1):
+        print(f"  {number}. {question.text}")
+    if not sys.stdin.isatty():
+        return {q.text: None for q in questions}
+    while True:
+        reply = input("Did all of these hold? "
+                      "[y = yes / n = no / d = decide one by one / s = skip] ").strip().lower()
+        if reply in YES:
+            return {q.text: True for q in questions}
+        if reply in NO:
+            return {q.text: False for q in questions}
+        if reply in ("d", "detail", "details"):
+            return {q.text: ask(q.text) for q in questions}
+        if reply in ("s", "skip", ""):
+            print("      skipped: this part can only end as undetermined.")
+            return {q.text: None for q in questions}
 
 
 def section_headings() -> set:
@@ -275,11 +301,24 @@ def finish(scenario: h.Scenario, profile, session_id: str, env: Dict[str, str],
         print("\nThe skill did not load. This run is INVALID - it says nothing about the skill.")
 
     ctx = h.Context(transcript=transcript, positions=positions, baseline=baseline)
+    checked = h.evaluate(scenario, ctx, {}, loaded)
+    print("\nAutomatic checks:")
+    for part, result in checked.items():
+        for item in result["items"]:
+            if "check" not in item:
+                continue
+            mark = {True: "ok  ", False: "FAIL", None: "?   "}[item["result"]]
+            print(f"  {mark} [{part}] {item['check']}")
+            for extra in (item.get("detail"), item.get("error")):
+                if extra:
+                    print(f"         {extra}")
+
     answers: Dict[str, h.Result] = {}
-    if loaded is not False and scenario.questions:
-        print("\nYour judgement ('yes' is the expected behaviour):")
-        for question in scenario.questions:
-            answers[question.text] = ask(f"[{question.part}] {question.text}")
+    if loaded is not False:
+        for part in scenario.parts:
+            questions = [q for q in scenario.questions if q.part == part]
+            if questions:
+                answers.update(ask_part(part, questions))
     parts = h.evaluate(scenario, ctx, answers, loaded)
 
     now = dt.datetime.now(dt.timezone.utc)
@@ -303,9 +342,12 @@ def finish(scenario: h.Scenario, profile, session_id: str, env: Dict[str, str],
         print(f"  {part}: {result['status'].upper()}")
         for item in result["items"]:
             if item["result"] is not True:
+                kind = "check" if "check" in item else "answer"
                 name = item.get("check") or item.get("question")
-                mark = "FAILED" if item["result"] is False else "undetermined"
-                print(f"      {mark}: {name}")
+                mark = "failed" if item["result"] is False else "undetermined"
+                print(f"      {mark} {kind}: {name}")
+                if item.get("detail"):
+                    print(f"         {item['detail']}")
     print(f"\nSaved to {out}")
 
 

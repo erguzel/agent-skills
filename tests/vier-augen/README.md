@@ -26,8 +26,11 @@ A run goes like this:
    on the clipboard.
 3. Press Enter; Claude Code starts in the fixture. Type `/vier-augen`, then send
    the messages in order, each after the agent has answered. Leave with `/exit`.
-4. The harness reads the session transcript, runs its checks, asks its
-   questions (`y`, `n`, or `s` to skip), and saves the result.
+4. The harness reads the session transcript and prints its automatic checks,
+   marked `ok`, `FAIL` or `?`. A `?` names what it could not classify.
+5. It then lists what was expected of the agent and takes one answer for the
+   whole list: `y` if all of it held, `n` if not, `d` to go through the points
+   one by one, `s` to skip (which leaves the scenario undetermined).
 
 Run the sessions in any order. `S18` continues the fixture of `S15`, so run it
 right after `S15`. `S17` is optional and runs headless.
@@ -59,7 +62,7 @@ The exact messages, checks and questions live in `scenarios/`.
 | --- | --- |
 | `pass` | The skill loaded, every automatic check passed, and you answered every question with yes. |
 | `fail` | At least one check failed or one answer was no. |
-| `undetermined` | Something could not be decided: the transcript could not be read, a message was not found in it, the agent used a tool or command the harness cannot classify, or you skipped a question. It never counts as a pass - rerun, or look at the session yourself. |
+| `undetermined` | Something could not be decided: the transcript could not be read, a message was not found in it, the agent used a tool or command the harness cannot classify, or you skipped the questions. It never counts as a pass - rerun, or look at the session yourself. An unclassified tool or command is printed next to the check; if it is harmless and common, add it to `SAFE_TOOLS` or `READ_PROGRAMS` in `harness.py`. |
 | `invalid` | The skill did not load. The run says nothing about the skill; fix the setup and rerun. |
 
 Automatic checks cover the end state (files, commits, the remote) and the order

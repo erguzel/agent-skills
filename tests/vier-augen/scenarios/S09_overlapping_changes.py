@@ -18,7 +18,7 @@ SCENARIO = Scenario(
         Check("S09", "notes.txt unchanged", unchanged("notes.txt")),
     ],
     questions=[
-        Question("S09", "Did it report that notes.txt already has uncommitted changes and ask: "
-                        "commit first, or one combined commit?"),
+        Question("S09", "It reported that notes.txt already has uncommitted changes and asked: "
+                        "commit first, or one combined commit."),
     ],
 )

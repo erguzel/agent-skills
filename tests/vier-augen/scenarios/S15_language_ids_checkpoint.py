@@ -27,15 +27,15 @@ SCENARIO = Scenario(
         Check("S16", "checkpoint carries theme IDs", contains(CHECKPOINT, r"\bM\d")),
     ],
     questions=[
-        Question("S15", "Did it answer in Turkish throughout?"),
-        Question("S15", "Did it open a theme with a hint, e.g. M1(logging), number its items "
-                        "within it, and bold the first mention?"),
-        Question("S15", "Did later mentions use a short label with the ID, and did it mark "
-                        "the settled item as resolved?"),
-        Question("S16", "After your standing instruction, did its answers end with the open items?"),
-        Question("S16", "Does the checkpoint carry that standing instruction in one line?"),
-        Question("S16", "Does the checkpoint leave out the one-off line-count request?"),
-        Question("S16", "Did it propose the .gitignore entry (if needed) and ask before "
-                        "creating the file?"),
+        Question("S15", "It answered in Turkish throughout."),
+        Question("S15", "It opened a theme with a hint, e.g. M1(logging), numbered its items "
+                        "within it, and bolded the first mention."),
+        Question("S15", "Later mentions used a short label with the ID, and the settled item was "
+                        "marked resolved."),
+        Question("S16", "After your standing instruction, its answers ended with the open items."),
+        Question("S16", "The checkpoint carries that standing instruction in one line."),
+        Question("S16", "The checkpoint leaves out the one-off line-count request."),
+        Question("S16", "It proposed the .gitignore entry (if needed) and asked before creating "
+                        "the file."),
     ],
 )

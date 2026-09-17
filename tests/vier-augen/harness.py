@@ -204,8 +204,9 @@ WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 # Tools known not to change files. Any other tool counts as "unknown", and a
 # write or delete check that meets one is undetermined rather than passed.
 SAFE_TOOLS = {"Read", "Grep", "Glob", "LS", "WebFetch", "WebSearch", "TodoWrite", "TodoRead",
-              "Skill", "Task", "Agent", "ToolSearch", "AskUserQuestion", "BashOutput",
-              "KillShell", "ExitPlanMode", "EnterPlanMode"}
+              "Skill", "SlashCommand", "Task", "Agent", "ToolSearch", "AskUserQuestion",
+              "BashOutput", "KillShell", "ExitPlanMode", "EnterPlanMode", "NotebookRead",
+              "ListMcpResourcesTool", "ReadMcpResourceTool", "Monitor", "TaskOutput"}
 READ_PROGRAMS = {"ls", "cat", "head", "tail", "wc", "grep", "egrep", "rg", "stat", "file", "pwd",
                  "echo", "printf", "which", "du", "tree", "awk", "sort", "uniq", "diff", "less",
                  "more", "nl", "bat", "jq", "basename", "dirname", "realpath", "date", "env",
@@ -284,6 +285,13 @@ def action_kinds(event: Event) -> Set[str]:
     return {"unknown"}
 
 
+def describe(event: Event) -> str:
+    if event.name == "Bash":
+        command = " ".join(str(event.input.get("command", "")).split())
+        return f"unclassified command: {command[:80]}"
+    return f"unknown tool: {event.name}"
+
+
 def touches(rel: str) -> Callable[[Event], bool]:
     def predicate(event: Event) -> bool:
         blob = json.dumps(event.input)
@@ -304,6 +312,11 @@ class Context:
     transcript: Optional[Transcript]
     positions: Optional[List[int]]
     baseline: Dict
+    notes: List[str] = field(default_factory=list)
+
+    def note(self, text: str) -> None:
+        if text not in self.notes:
+            self.notes.append(text)
 
 
 Result = Optional[bool]            # True pass, False fail, None undetermined
@@ -341,8 +354,12 @@ def no_action(kinds: Set[str], after: Optional[int] = None, before: Optional[int
             return None
         if any(kinds & action_kinds(e) and (where is None or where(e)) for e in events):
             return False
-        if kinds & {"write", "delete"} and any({"exec", "unknown"} & action_kinds(e) for e in events):
-            return None                           # could not rule it out
+        if kinds & {"write", "delete"}:
+            unclear = [e for e in events if {"exec", "unknown"} & action_kinds(e)]
+            if unclear:
+                for event in unclear:
+                    ctx.note(describe(event))
+                return None                       # could not rule it out
         return True
     return fn
 
@@ -502,13 +519,16 @@ def evaluate(scenario: Scenario, ctx: Context, answers: Dict[str, Result],
         items = []
         for check in scenario.checks:
             if check.part == part:
+                seen = len(ctx.notes)
                 try:
                     value = check.fn(ctx)
                 except Exception as exc:     # a broken check never passes
-                    value = None
                     items.append({"check": check.label, "result": None, "error": str(exc)})
                     continue
-                items.append({"check": check.label, "result": value})
+                item = {"check": check.label, "result": value}
+                if value is None and len(ctx.notes) > seen:
+                    item["detail"] = "; ".join(ctx.notes[seen:])
+                items.append(item)
         for question in scenario.questions:
             if question.part == part:
                 items.append({"question": question.text, "result": answers.get(question.text)})
