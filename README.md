@@ -92,6 +92,18 @@ Runs the `vier-augen` attribution patterns against messages and identities that
 must be blocked or let through, and checks that the copy embedded in the CI
 template matches the pattern files. CI runs it too.
 
+## Behaviour scenarios
+
+```
+tests/vier-augen/scenarios.md
+```
+
+Nineteen situations that check whether a skill's text changes what an agent
+does: each gives the message to send, what to expect and what counts as a
+failure. They run by hand in an agent session against a throwaway fixture the
+file describes, and the outcome goes in the results table at the end of it. CI
+does not run them.
+
 ## Contributing
 
 Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md)
