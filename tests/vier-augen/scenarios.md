@@ -4,8 +4,8 @@ Hand-run checks that the skill's text changes what an agent does. They measure
 the instruction layer only, so run them **without** the git hooks and the agent
 adapter - those would mask a rule the text failed to carry.
 
-Run the full set once as a baseline, and again after any change to `SKILL.md`
-(compression included). Record both in the results table at the end.
+Run the full set once as a baseline, and again after any change to a rule in
+`SKILL.md`. Record each run in the results table at the end.
 
 ## How to run
 
@@ -204,7 +204,7 @@ Prompts are in English; S15 is in Turkish on purpose.
 
 ## Results
 
-| Scenario | Baseline | After compression | Notes |
+| Scenario | Baseline | Latest | Notes |
 | --- | --- | --- | --- |
 | S1 | | | |
 | S2 | | | |
