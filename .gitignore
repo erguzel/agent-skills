@@ -2,6 +2,9 @@
 .ai/eigenkontext.md
 .ai/github-flow-plan.md
 
+# vier-augen behaviour test results
+tests/vier-augen/results/
+
 # macOS
 .DS_Store
 

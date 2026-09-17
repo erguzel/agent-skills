@@ -16,5 +16,14 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
 
 - Validate: `python tools/validate_skills.py`
 - Test attribution patterns: `python tools/test_attribution.py`
+- Behaviour scenarios: `python3 tests/vier-augen/run.py --affected`, then run
+  the listed sessions (see `tests/vier-augen/README.md`)
+
+## Behaviour tests
+
+- A change to what a rule in a skill's `SKILL.md` says needs the scenarios that
+  cover its section. A new rule or feature comes with a new scenario.
+- Compression, restructuring and releases need every scenario.
+- Typo and formatting fixes that change no rule need none.
 - Enable commit hooks (once per clone):
   `git config core.hooksPath skills/vier-augen/hooks`

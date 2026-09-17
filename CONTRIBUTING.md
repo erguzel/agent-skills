@@ -20,6 +20,19 @@ python tools/validate_skills.py
 python tools/test_attribution.py
 ```
 
+If the change touches what a rule in `SKILL.md` says, run the behaviour
+scenarios it affects - a new rule needs a new scenario - and paste the
+`--report` rows for them into the pull request description. The results
+directory is not committed.
+
+```bash
+python3 tests/vier-augen/run.py --affected
+python3 tests/vier-augen/run.py --report
+```
+
+See [tests/vier-augen/README.md](tests/vier-augen/README.md) for how to run
+and add scenarios.
+
 Commits must not carry assistant attribution - no `Co-Authored-By` trailers for
 agents, no "Generated with" lines, no session links. CI checks commit messages,
 authors and the pull request description.

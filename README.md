@@ -48,7 +48,11 @@ tools/
 └── test_attribution.py     # tests for the vier-augen attribution patterns
 tests/
 └── vier-augen/
-    └── scenarios.md        # behaviour scenarios, run by hand in an agent
+    ├── README.md           # how to run and add behaviour scenarios
+    ├── run.py              # the semi-automated harness
+    ├── harness.py          # fixture, transcript checks, results
+    ├── profiles/           # per-agent start, invocation and transcript reading
+    └── scenarios/          # one file per agent session
 .github/workflows/
 └── validate.yml            # runs the validator on every push and pull request
 AGENTS.md                   # how agents should behave inside THIS repo
