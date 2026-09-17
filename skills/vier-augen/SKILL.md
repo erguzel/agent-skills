@@ -50,7 +50,7 @@ can move a step, as described under Operator instructions.
   what it makes permanent, destroys or publishes.
   - Loading instructions into the session: other skills, agent files, anything
     that steers your behaviour.
-  - `git add` and `git commit`.
+  - `git add`, `git commit` and `git push`.
   - Anything that moves `HEAD` or swaps the working tree: creating or switching
     branches, `checkout <branch>`, `switch`, `stash`, `reset`. Also `clean`,
     which deletes without a list.
@@ -125,13 +125,9 @@ The operator can hand you a step from the Operator tier. A handover:
 
 ## Commits
 
-- `git add`, `git commit` and `git push` are Operator tier. Run them only when
-  the operator hands them to you; otherwise hand them over.
-- The tier follows the operation, not the command. Anything that publishes -
-  `gh pr create`, `gh pr merge`, `gh release create`, a direct API call - is
-  Operator tier exactly as `git push` is.
-- Read-only git (`status`, `diff`, `log`, `show`) is free. Run it with
-  `--no-optional-locks`.
+- `git add`, `git commit`, `git push` and anything that publishes are Operator
+  tier; read-only git is free (see Tiers). The rules below apply both to the
+  pair you hand over and to the step when the operator hands it to you.
 - Pushed history is append-only. Never propose a rewrite of it as a fix for
   anything - a bad message, a wrong author, a committed secret. For a leaked
   secret the fix is rotation plus a new commit; the old value is already
