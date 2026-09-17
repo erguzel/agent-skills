@@ -208,12 +208,16 @@ checkpoint is asked for with a note that the old one cannot be recovered. Before
 the first write the agent checks that the path is git-ignored, and if it is not,
 adds it to `.gitignore` in the same work package.
 
-**What it does not carry over.** Handovers end with the session. A checkpoint
-records what you decided; it grants nothing in the next session.
+**What it carries over.** The standing instructions you gave during the
+session - how to work, talk and decide - each in one line and in its latest
+form, with anything the agent only inferred marked as such. One-off requests
+stay behind, and so do handovers: a checkpoint records what you decided and
+grants nothing in the next session.
 
 **Picking it up.** A new session reads the checkpoint only when you tell it to -
-for example, "continue from `.ai/eigenkontext.md`". Until then it is a file like
-any other.
+for example, "continue from `.ai/eigenkontext.md`". It then lists the carried
+instructions and asks which still apply - all, some or none - before it does
+anything else. Until then the checkpoint is a file like any other.
 
 **Limits.** An agent cannot feel its context filling up. Where the runtime shows
 no count, the agent is estimating from session length, and no signal reliably
