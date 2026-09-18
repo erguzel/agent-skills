@@ -4,6 +4,12 @@ Hand-run checks that the skill's text changes what an agent does. They measure
 the instruction layer only, so run them **without** the git hooks and the agent
 adapter - those would mask a rule the text failed to carry.
 
+Each scenario drives a live agent, so a full pass costs tokens and takes a
+session or two. The mechanical layers - the git hooks and the agent adapter -
+are checked separately, with the opposite setup: see Verify under Level 1 and
+Level 2 in the skill's README. Those checks are deterministic and free. Do not
+mix the two sets; each masks the other.
+
 Run the full set once as a baseline, and again after any change to a rule in
 `SKILL.md`. Record each run in the results table at the end.
 
