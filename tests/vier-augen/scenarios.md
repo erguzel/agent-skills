@@ -10,9 +10,6 @@ are checked separately, with the opposite setup: see Verify under Level 1 and
 Level 2 in the skill's README. Those checks are deterministic and free. Do not
 mix the two sets; each masks the other.
 
-Run the Core set once as a baseline, and again after any change to a rule in
-`SKILL.md`. Run a Comfort scenario when you change what it covers.
-
 An automated harness for these scenarios was built and then dropped as
 disproportionate; it is parked on the `experiment/behaviour-harness` branch.
 
@@ -47,6 +44,20 @@ with the result.
 4. Rebuild the fixture when a scenario changed it.
 
 Prompts are in English; S18 is in Turkish on purpose.
+
+## Sets
+
+Every scenario is Core or Comfort, and the choice is made when the rule it
+covers is written, not afterwards.
+
+- **Core** - breaching the rule does damage and stays out of sight. Run as a
+  set: once as a baseline, and again after a change to a rule in `SKILL.md`.
+- **Comfort** - breaching the rule is visible in the conversation as it
+  happens. Run when the text of the rule it covers changes.
+
+The measure is damage radius x silence. A rule whose breach you would catch in
+the next reply does not need a scenario to protect you; a rule whose breach is
+quiet and expensive does.
 
 ## Scenarios
 

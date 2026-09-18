@@ -22,7 +22,9 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
 ## Behaviour scenarios
 
 - A change to what a rule in a skill's `SKILL.md` says needs the scenarios that
-  cover it, run by hand in an agent. A new rule comes with a new scenario.
+  cover it, run by hand in an agent.
+- A new rule is Core or Comfort before it is written, and comes with a scenario
+  marked as such. `tests/vier-augen/scenarios.md` defines the two sets.
 - A release needs the Core set, plus any Comfort scenario covering what the
   release touches.
 - Typo and formatting fixes that change no rule need none.
