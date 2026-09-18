@@ -105,6 +105,85 @@ Add that line to the existing hook - `.git/hooks/pre-commit`,
 the pre-commit framework, add a `repo: local` hook whose entry is
 `sh <path-to-this-skill>/hooks/pre-commit`.
 
+#### Verify
+
+The hooks fail closed, so a broken install stays quiet until something slips
+through. These checks use real input: each one stages or pushes what a hook is
+meant to stop. Run them in a throwaway repository, never in your own.
+
+```bash
+git init /tmp/va-check && cd /tmp/va-check
+git config user.email you@example.com && git config user.name You
+sh <path-to-this-skill>/hooks/install.sh
+echo seed > a.txt && git add a.txt && git commit -m "init: seed"
+BR=$(git branch --show-current)      # the default branch name varies
+```
+
+1. **Installed.**
+
+   ```bash
+   ls .git/hooks/commit-msg .git/hooks/pre-commit .git/hooks/pre-push
+   ```
+
+   Three files. Missing: the installer ran outside the repository, or
+   `core.hooksPath` is set and it printed lines for you to add by hand.
+
+2. **Attribution in the message.**
+
+   ```bash
+   echo x >> a.txt && git add a.txt
+   git commit -m "test: trailer" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
+   ```
+
+   Refused: `assistant attribution found in the message`. If it commits,
+   `commit-msg` is not wired, or `hooks/attribution/` is not where it expects.
+
+3. **Agent identity.**
+
+   ```bash
+   GIT_AUTHOR_NAME=Claude GIT_AUTHOR_EMAIL=noreply@anthropic.com \
+     git commit -m "test: identity"
+   ```
+
+   Refused: `coding-agent identity in GIT_AUTHOR_IDENT`.
+
+4. **Staged secret.**
+
+   ```bash
+   git reset && printf 'key = %s%s\n' AKIA ABCDEFGHIJKLMNOP > secret.txt
+   git add secret.txt && git commit -m "test: secret"
+   ```
+
+   Refused: `possible AWS access key at secret.txt:1`. The value is never
+   printed - if you see it in the output, that is a bug worth reporting. (The
+   two example lines here assemble their bait at run time, so that this
+   document does not trip the hook it describes.)
+
+5. **Personal path.**
+
+   ```bash
+   git reset && rm secret.txt
+   printf 'path = /%s/someone/Projects/thing\n' Users > pathy.txt && git add pathy.txt
+   git commit -m "test: path"
+   ```
+
+   Refused: `possible personal home path at pathy.txt:1`.
+
+6. **Force-push.** No network needed - a local bare repository is a remote.
+
+   ```bash
+   git reset && rm pathy.txt
+   git init --bare /tmp/va-remote.git && git remote add origin /tmp/va-remote.git
+   git push origin "$BR"
+   git commit --amend --no-verify -m "init: seed (amended)"
+   git push --force origin "$BR"
+   ```
+
+   The ordinary push succeeds; the last command is refused with `would rewrite
+   history on origin`.
+
+Clean up with `rm -rf /tmp/va-check /tmp/va-remote.git`.
+
 Things to know:
 
 - Run the installer once per clone. The wrappers point at the skill's path; if
@@ -147,6 +226,38 @@ a project install; for a global install, point it at
 
 Answering the prompt is how you hand a step to the agent: your "yes" is the
 handover. Force-push is refused outright - run it yourself when you mean it.
+
+#### Verify
+
+The first three checks need no agent and cost nothing: they hand the guard a
+tool call on stdin and read its answer. Adjust the path for a global install.
+
+```bash
+G=.claude/skills/vier-augen/adapters/claude-code/guard.py
+probe() { echo "$1" | python3 "$G"; echo "exit=$?"; }
+probe '{"tool_name":"Bash","tool_input":{"command":"git push --force origin main"}}'
+probe '{"tool_name":"Bash","tool_input":{"command":"git status"}}'
+probe '{"tool_name":"Bash","tool_input":{"command":"git -C . add probe.txt"}}'
+```
+
+In order: `blocked - force-push rewrites published history` with `exit=2`; no
+output with `exit=0`; a `"permissionDecision": "ask"` object with `exit=0`. The
+third is what the permission rules alone would miss, since `git -C <dir> add`
+does not match `Bash(git add *)`. Identical answers to all three mean the guard
+is not deciding - check that `python3` is there and that the path resolves.
+
+The last three need a live agent, so they cost tokens. In a throwaway
+repository, with the template merged and the session restarted:
+
+- Ask the agent to stage a file with `git add`. A prompt appears before the
+  command runs. Do not tick "don't ask again" - it blinds the next check.
+- Ask it to run `git -C . add <file>`. A prompt appears again; this one is the
+  guard's.
+- Hand a force-push over by name. The runtime refuses it outright.
+
+The last one rarely gets that far: the skill's text stops the agent first, and
+an agent that declines on its own has not exercised the rule. The stdin probe
+above is what verifies it.
 
 Things to know:
 
