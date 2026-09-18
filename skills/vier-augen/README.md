@@ -66,8 +66,8 @@ levels, and you switch each one on yourself.
 ### Level 0 - install and invoke
 
 ```bash
-npx skills add erguzel/skills --skill vier-augen      # this project
-npx skills add erguzel/skills --skill vier-augen -g   # every project
+npx skills add erguzel/agent-skills --skill vier-augen      # this project
+npx skills add erguzel/agent-skills --skill vier-augen -g   # every project
 ```
 
 A project install puts the skill inside the repository (for Claude Code,
