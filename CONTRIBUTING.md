@@ -13,8 +13,9 @@ For changes to a skill's rules, open an issue first. A rule earns its place by
 changing what the agent does at a decision point; a rule that would not alter
 any concrete action belongs in the skill's `references/` or nowhere.
 
-A proposed rule says whether it is Core or Comfort, and why. The measure is
-damage radius x silence; `tests/vier-augen/scenarios.md` defines both sets.
+A proposed rule says whether it is Core or Comfort, and why, and comes with a
+scenario marked as such, block included. The measure is damage radius x
+silence; `tests/vier-augen/scenarios.md` defines both sets.
 
 ## Before a pull request
 

@@ -46,9 +46,10 @@ S2 = {
 }
 
 
-def document(s1=S1, s2=S2, raw2: str | None = None) -> list[str]:
-    """A two-scenario file. `raw2` replaces S2's block text verbatim."""
+def document(s1=S1, s2=S2, raw2: str | None = None, omit2: bool = False) -> list[str]:
+    """A two-scenario file. `raw2` replaces S2's block text; `omit2` drops it."""
     block2 = raw2 if raw2 is not None else json.dumps(s2, indent=2)
+    fence2 = "" if omit2 else f"```json\n{block2}\n```"
     text = f"""# test scenarios
 
 ## Sets
@@ -70,9 +71,7 @@ Core first.
 - **Set:** Core
 - **Covers:** Approval
 
-```json
-{block2}
-```
+{fence2}
 
 ## Recording a run
 
@@ -97,6 +96,7 @@ def with_check(check) -> dict:
 
 CASES: list[tuple[str, list[str], str]] = [
     ("valid file", document(), ""),
+    ("missing block", document(omit2=True), "S2 has no ```json block"),
     ("invalid JSON", document(raw2='{"steps": ["x"],}'), "is not valid JSON"),
     ("block is not an object", document(raw2="[1, 2]"), "must be a JSON object"),
     ("missing keys", document(s2=variant(steps=None, checks=None)), "missing keys ['checks', 'steps']"),
