@@ -20,6 +20,7 @@ damage radius x silence; `tests/vier-augen/scenarios.md` defines both sets.
 
 ```bash
 python tools/validate_skills.py
+python tools/validate_scenarios.py
 python tools/test_attribution.py
 ```
 
