@@ -15,6 +15,7 @@ jobs:
           python-version: "3.12"
       - run: python tools/validate_skills.py
       - run: python tools/validate_scenarios.py
+      - run: python tools/test_validate_scenarios.py
       - run: python tools/test_attribution.py
 
   attribution:
