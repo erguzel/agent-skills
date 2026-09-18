@@ -111,6 +111,16 @@ The hooks fail closed, so a broken install stays quiet until something slips
 through. These checks use real input: each one stages or pushes what a hook is
 meant to stop. Run them in a throwaway repository, never in your own.
 
+From a clone of the skill's own repository, one command runs all of them in a
+throwaway repository it builds and removes itself:
+
+```bash
+python3 tests/vier-augen/run.py verify
+```
+
+It matches the messages the hooks print, so those messages are an interface:
+change them deliberately, and change the checks with them.
+
 ```bash
 git init /tmp/va-check && cd /tmp/va-check
 git config user.email you@example.com && git config user.name You
