@@ -45,6 +45,7 @@ skills/
     └── references/         # optional: read on demand, not loaded up front
 tools/
 ├── validate_skills.py      # spec checks, run over every skill in CI
+├── validate_scenarios.py   # structure checks for the scenario file, in CI
 └── test_attribution.py     # tests for the vier-augen attribution patterns
 tests/
 └── vier-augen/
@@ -85,6 +86,16 @@ script with a shebang is executable, and that every shipped JSON file parses. CI
 runs it on every push and pull request.
 
 ```bash
+python tools/validate_scenarios.py
+```
+
+Checks the shape of `tests/vier-augen/scenarios.md`: that every scenario
+carries a `Set` marker of `Core` or `Comfort`, that the numbering runs from 1
+without gaps, that the Core scenarios come before the Comfort ones, and that a
+scenario referring to another names one that exists and comes earlier. It says
+nothing about whether a scenario is any good. CI runs it too.
+
+```bash
 python tools/test_attribution.py
 ```
 
@@ -102,7 +113,7 @@ Twenty-one situations, each marked Core or Comfort, that check whether a
 skill's text changes what an agent does: each gives the message to send, what
 to expect and what counts as a failure. They run by hand in an agent session
 against a throwaway fixture the file describes. Results are not kept here. CI
-does not run them.
+checks the file's structure but cannot run the scenarios themselves.
 
 ## Contributing
 
