@@ -98,10 +98,10 @@ template matches the pattern files. CI runs it too.
 tests/vier-augen/scenarios.md
 ```
 
-Twenty-one situations that check whether a skill's text changes what an agent
-does: each gives the message to send, what to expect and what counts as a
-failure. They run by hand in an agent session against a throwaway fixture the
-file describes, and the outcome goes in the results table at the end of it. CI
+Twenty-one situations, each marked Core or Optional, that check whether a
+skill's text changes what an agent does: each gives the message to send, what
+to expect and what counts as a failure. They run by hand in an agent session
+against a throwaway fixture the file describes. Results are not kept here. CI
 does not run them.
 
 ## Contributing
