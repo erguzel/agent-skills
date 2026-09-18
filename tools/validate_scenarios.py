@@ -6,7 +6,7 @@
   - the Core scenarios come before the Comfort ones
   - every `S<n>` the file mentions is a scenario that exists, and a scenario
     that continues another comes after it
-  - a scenario carries at most one ```json block; when it has one, the block
+  - every scenario carries exactly one ```json block, and the block
     has the required keys, no unknown ones, and every check uses a known name
     with arguments of the right shape (the vocabulary is CHECKS below)
   - `before` and `after` in a check count the scenario's own steps
@@ -36,8 +36,8 @@ FENCE_CLOSE_RE = re.compile(r"^```\s*$")
 SETS = ("Core", "Comfort")
 
 REQUIRED = {"steps", "expected", "fail_if", "checks"}
-OPTIONAL = {"setup": list, "continues": str, "fixture": str, "session": str, "mode": str}
-FIXED = {"fixture": ("keep",), "session": ("new",), "mode": ("headless",)}
+OPTIONAL = {"setup": list, "continues": str, "fixture": str, "mode": str}
+FIXED = {"fixture": ("keep",), "mode": ("headless",)}
 
 KINDS = {"write", "delete", "git_add", "git_commit", "git_push", "git_change", "install", "mutate"}
 TIMES = ("once", "never", "any")
@@ -262,6 +262,7 @@ def check(lines: list[str]) -> list[str]:
                 break
         blocks = _blocks(lines, start, end)
         if not blocks:
+            errors.append(f"line {line_no}: S{number} has no ```json block")
             continue
         if len(blocks) > 1:
             errors.append(f"line {blocks[1][0]}: S{number} has more than one ```json block")

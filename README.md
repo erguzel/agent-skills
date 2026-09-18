@@ -92,8 +92,9 @@ python tools/validate_scenarios.py
 Checks the shape of `tests/vier-augen/scenarios.md`: that every scenario
 carries a `Set` marker of `Core` or `Comfort`, that the numbering runs from 1
 without gaps, that the Core scenarios come before the Comfort ones, and that a
-scenario referring to another names one that exists and comes earlier. It says
-nothing about whether a scenario is any good. CI runs it too.
+scenario referring to another names one that exists and comes earlier, and
+that each scenario's JSON block is well-formed and names only known checks. It
+says nothing about whether a scenario is any good. CI runs it too.
 
 ```bash
 python tools/test_attribution.py
@@ -110,8 +111,9 @@ tests/vier-augen/scenarios.md
 ```
 
 Twenty-one situations, each marked Core or Comfort, that check whether a
-skill's text changes what an agent does: each gives the message to send, what
-to expect and what counts as a failure. They run by hand in an agent session
+skill's text changes what an agent does: each gives the messages to send, what
+to expect, what counts as a failure, and the checks that need no judgment. They
+run by hand in an agent session
 against a throwaway fixture the file describes. Results are not kept here. CI
 checks the file's structure but cannot run the scenarios themselves.
 
