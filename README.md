@@ -1,4 +1,4 @@
-# skills
+# agent-skills
 
 A collection of [Agent Skills](https://agentskills.io) — portable instruction
 folders that any Skills-compatible AI agent can load.
@@ -21,7 +21,7 @@ The [`skills` CLI](https://github.com/vercel-labs/skills) installs one skill by
 name:
 
 ```bash
-npx skills add erguzel/skills --skill vier-augen
+npx skills add erguzel/agent-skills --skill vier-augen
 ```
 
 `--skill '*'` takes all of them. Or copy the folder into wherever your agent
