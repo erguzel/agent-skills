@@ -23,6 +23,7 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
 
 - A change to what a rule in a skill's `SKILL.md` says needs the scenarios that
   cover it, run by hand in an agent. A new rule comes with a new scenario.
-- A release needs the full set.
+- A release needs the Core set, plus any Optional scenario covering what the
+  release touches.
 - Typo and formatting fixes that change no rule need none.
-- Record every run in the results table in `tests/vier-augen/scenarios.md`.
+- Run results are not kept in this repository.
