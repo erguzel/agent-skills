@@ -23,7 +23,12 @@ silence; `tests/vier-augen/scenarios.md` defines both sets.
 python tools/validate_skills.py
 python tools/validate_scenarios.py
 python tools/test_attribution.py
+python tests/vier-augen/run.py verify
 ```
+
+The last one builds a throwaway repository, installs the hooks there and hands
+them and the guard the input they are meant to stop. It runs in CI too, so a
+change to a hook's message fails the pull request until the checks follow it.
 
 A change to a skill's rules also needs the behaviour scenarios that cover it,
 run by hand in an agent - see `tests/vier-augen/scenarios.md`. Results are not
