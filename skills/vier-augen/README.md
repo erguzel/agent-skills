@@ -241,6 +241,8 @@ handover. Force-push is refused outright - run it yourself when you mean it.
 
 The first three checks need no agent and cost nothing: they hand the guard a
 tool call on stdin and read its answer. Adjust the path for a global install.
+From a clone of the skill's own repository, `python3 tests/vier-augen/run.py
+verify` runs them together with the Level 1 checks.
 
 ```bash
 G=.claude/skills/vier-augen/adapters/claude-code/guard.py

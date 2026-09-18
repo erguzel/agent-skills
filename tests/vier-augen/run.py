@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """vier-augen test runner.
 
-  python3 tests/vier-augen/run.py verify        the mechanical layer: the git hooks
+  python3 tests/vier-augen/run.py verify        the mechanical layer: hooks and guard
   python3 tests/vier-augen/run.py S10 S17       behaviour scenarios (not here yet)
 
 `verify` wraps the checks under Verify in the skill's README. It needs no agent
 and costs nothing: it builds a throwaway repository, installs the hooks there
-and hands each hook the input it is meant to stop. The hooks are ON for it.
+and hands each hook - and the adapter's guard - the input it is meant to stop.
+The hooks are ON for it.
 
 The scenarios measure the instruction layer instead, with the hooks OFF. The two
 never run in one command - each masks the other.
@@ -15,6 +16,7 @@ never run in one command - each masks the other.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -151,6 +153,50 @@ def verify_hooks(repo: Path, remote: Path, install: subprocess.CompletedProcess,
                *refused(proc, "would rewrite history on"))
 
 
+GUARD = SKILL / "adapters" / "claude-code" / "guard.py"
+
+
+def probe(command: str, cwd: Path) -> subprocess.CompletedProcess:
+    """Hand the guard one Bash tool call on stdin, the way the runtime does."""
+    payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": command}})
+    return subprocess.run([sys.executable, str(GUARD)], input=payload, cwd=cwd,
+                          capture_output=True, text=True)
+
+
+def verify_guard(cwd: Path, report: Report) -> None:
+    print("\nLevel 2 - agent adapter (Claude Code)")
+
+    answers = []
+
+    proc = probe("git push --force origin main", cwd)
+    answers.append(output(proc))
+    report.add("the guard blocks a force-push",
+               proc.returncode == 2 and "blocked - force-push" in output(proc),
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
+
+    proc = probe("git status", cwd)
+    answers.append(output(proc))
+    report.add("the guard leaves a read-only command alone",
+               proc.returncode == 0 and not output(proc).strip(),
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
+
+    proc = probe("git -C . add probe.txt", cwd)
+    answers.append(output(proc))
+    decision = ""
+    try:
+        decision = json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecision"]
+    except (ValueError, KeyError, TypeError):
+        pass
+    report.add("the guard asks for `git -C . add`, which the rules alone would miss",
+               proc.returncode == 0 and decision == "ask",
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
+
+    report.add("the guard decides per command rather than answering alike",
+               len(set(answers)) == 3,
+               "two of the three probes came back with the same answer - check that "
+               "python3 is there and that the guard's path resolves.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -182,6 +228,7 @@ def main() -> None:
     try:
         repo, remote, install = build_repo(root)
         verify_hooks(repo, remote, install, report)
+        verify_guard(repo, report)
     finally:
         if args.keep:
             print(f"\nLeft behind: {root}")
