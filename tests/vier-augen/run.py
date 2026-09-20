@@ -715,8 +715,8 @@ def main() -> None:
             return
         print("Affected: " + " ".join(affected))
         print("Run order: " + " ".join(resolve(affected, scenarios, only=args.only)))
-        sys.exit("The scenarios are not runnable from here yet: the driver is not here. "
-                 "Until it is, tests/vier-augen/scenarios.md carries them for a hand-run.")
+        print("Run them: python3 tests/vier-augen/run.py " + " ".join(affected))
+        return
     targets = [t.lower() for t in args.targets]
     if not targets:
         parser.print_help()
