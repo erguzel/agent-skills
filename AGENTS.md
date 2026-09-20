@@ -11,6 +11,12 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
 - `SKILL.md` stays under 500 lines and its relative links must resolve; the
   validator enforces both.
 - The root `README.md` is the index. A new skill gets a row in its table.
+- Record a decision under `docs/adr/` when it shapes what later work has to
+  live with - a file format, a boundary between components, what runs where,
+  what is deliberately not built - and someone who did not make it could
+  reasonably choose otherwise. Do not record a fix, a rename, a dependency
+  bump, or a preference nobody else has to follow. `docs/adr/README.md` gives
+  the format.
 
 ## What may be published
 
