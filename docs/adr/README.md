@@ -59,3 +59,10 @@ Do not edit an accepted ADR to say something else, and do not delete it. Write
 a new one, and set the old one's status to `Superseded by NNNN`. The point of
 this directory is that a reader can see what was believed at the time, not only
 what is believed now.
+
+A record may say that something is still to be done - an exception it carries,
+a move it defers. When a later decision carries that out, the later record
+names the earlier one in its context, and the earlier one is not edited or
+superseded: its decision still stands, only its stated intention has been met.
+Which intentions have been met is read from `../ARCHITECTURE.md`, which says
+what is true now.
