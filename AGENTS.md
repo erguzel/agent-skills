@@ -18,6 +18,7 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
 - Check the scenario file's structure: `python tools/validate_scenarios.py`
 - Test the scenario validator: `python tools/test_validate_scenarios.py`
 - Test the scenario runner's selection: `python tests/vier-augen/test_run.py`
+- Test the scenario checks and profile: `python tests/vier-augen/test_harness.py`
 - Verify the hooks and the guard: `python tests/vier-augen/run.py verify`
 - Test attribution patterns: `python tools/test_attribution.py`
 - Enable commit hooks (once per clone):
