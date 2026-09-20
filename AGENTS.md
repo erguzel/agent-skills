@@ -12,6 +12,23 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
   validator enforces both.
 - The root `README.md` is the index. A new skill gets a row in its table.
 
+## What may be published
+
+This repository is public. Everything committed is read by strangers, and a
+document written for one session is the usual way something private slips out.
+
+- Every file in the repository is written in English, for a reader who was not
+  in the session that produced it. No "as we discussed", no session or ticket
+  numbers that resolve nowhere.
+- No personal paths (`/Users/...`, `/home/...`), real hostnames, machine names,
+  internal URLs, tokens or keys - not even as an example. Use a placeholder and
+  say what the reader has to set.
+- No transcript: nothing pasted from a session, no agent output quoted as
+  evidence, no operator's name or company.
+- `/.ai/` is the scratch directory and is ignored in full - checkpoints, run
+  logs, copied transcripts. Nothing in it is committed, and nothing that
+  matters long-term is left only in it.
+
 ## Commands
 
 - Validate: `python tools/validate_skills.py`
