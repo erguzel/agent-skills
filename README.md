@@ -44,12 +44,19 @@ skills/
     ├── ci/                 # optional: CI templates for your own repos, opt-in
     └── references/         # optional: read on demand, not loaded up front
 tools/
-├── validate_skills.py      # spec checks, run over every skill in CI
-├── validate_scenarios.py   # structure checks for the scenario file, in CI
-└── test_attribution.py     # tests for the vier-augen attribution patterns
+├── validate_skills.py          # spec checks, run over every skill in CI
+├── validate_scenarios.py       # structure checks for the scenario file, in CI
+├── test_validate_scenarios.py  # tests for that validator, in CI
+└── test_attribution.py         # tests for the vier-augen attribution patterns
 tests/
 └── vier-augen/
-    └── scenarios.md        # behaviour scenarios, run by hand in an agent
+    ├── scenarios.md        # the behaviour scenarios themselves
+    ├── build-fixture.sh    # the throwaway repository they run against
+    ├── run.py              # one entry point: verify, and the scenarios
+    ├── harness.py          # agent-neutral: the checks, over transcript and files
+    ├── profiles/           # per-agent: how to drive it and read its transcript
+    ├── test_run.py         # tests for selection and the driver, in CI
+    └── test_harness.py     # tests for the checks and the profile, in CI
 .github/workflows/
 └── validate.yml            # runs the validator on every push and pull request
 AGENTS.md                   # how agents should behave inside THIS repo
@@ -112,10 +119,19 @@ tests/vier-augen/scenarios.md
 
 Twenty-one situations, each marked Core or Comfort, that check whether a
 skill's text changes what an agent does: each gives the messages to send, what
-to expect, what counts as a failure, and the checks that need no judgment. They
-run by hand in an agent session
-against a throwaway fixture the file describes. Results are not kept here. CI
-checks the file's structure but cannot run the scenarios themselves.
+to expect, what counts as a failure, and the checks that need no judgment.
+
+```bash
+python3 tests/vier-augen/run.py --list      # what there is
+python3 tests/vier-augen/run.py S7          # run one, and the session it continues
+```
+
+The runner builds a throwaway fixture, drives an agent through the steps and
+judges the checks against the transcript and the fixture. It needs an agent, so
+it costs tokens and CI does not run it - CI checks the file's structure, the
+runner's own selection, and the checks themselves. A check it cannot settle
+comes back undetermined rather than passing. Results are written outside this
+repository and are not kept here.
 
 ## Contributing
 

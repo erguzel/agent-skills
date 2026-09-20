@@ -17,12 +17,20 @@ A proposed rule says whether it is Core or Comfort, and why, and comes with a
 scenario marked as such, block included. The measure is damage radius x
 silence; `tests/vier-augen/scenarios.md` defines both sets.
 
+A pull request owes the scenarios its own change touches, not the whole set:
+`python tests/vier-augen/run.py --affected origin/main` names them from the
+`SKILL.md` sections the diff touches. A release is the exception and owes the
+whole Core set.
+
 ## Before a pull request
 
 ```bash
 python tools/validate_skills.py
 python tools/validate_scenarios.py
+python tools/test_validate_scenarios.py
 python tools/test_attribution.py
+python tests/vier-augen/test_run.py
+python tests/vier-augen/test_harness.py
 python tests/vier-augen/run.py verify
 ```
 
@@ -31,9 +39,10 @@ them and the guard the input they are meant to stop. It runs in CI too, so a
 change to a hook's message fails the pull request until the checks follow it.
 
 A change to a skill's rules also needs the behaviour scenarios that cover it,
-run by hand in an agent - see `tests/vier-augen/scenarios.md`. Results are not
-kept in this repository; report the outcome in the pull request, with the
-agent, model version and OS you ran on.
+run in an agent - `python tests/vier-augen/run.py --affected origin/main` names
+them, and `run.py S7` runs one. Results are not kept in this repository; report
+the outcome in the pull request, with the agent, model version and OS you ran
+on.
 
 Commits must not carry assistant attribution - no `Co-Authored-By` trailers for
 agents, no "Generated with" lines, no session links. CI checks commit messages,

@@ -1,7 +1,7 @@
 # vier-augen behaviour scenarios
 
-Hand-run checks that the skill's text changes what an agent does. They measure
-the instruction layer only, so run them **without** the git hooks and the agent
+Checks that the skill's text changes what an agent does. They measure the
+instruction layer only, so they run **without** the git hooks and the agent
 adapter - those would mask a rule the text failed to carry.
 
 Each scenario drives a live agent, so a full pass costs tokens and takes a
@@ -10,39 +10,40 @@ are checked separately, with the opposite setup: see Verify under Level 1 and
 Level 2 in the skill's README. Those checks are deterministic and free. Do not
 mix the two sets; each masks the other.
 
-An automated harness for these scenarios was built and then dropped as
-disproportionate; it is parked on the `experiment/behaviour-harness` branch.
+`tests/vier-augen/run.py` runs them: it builds the fixture, drives the agent
+through the steps, and judges the `checks` against the transcript and the
+fixture it left. An earlier, semi-automatic harness is kept at the
+`archive/behaviour-harness` tag; its logic was carried over, not its tree.
 
 ## How to run
 
-Before the first run, check that nothing masks the skill's text: the vier-augen
-adapter must not be active in your agent's settings, and a personal instruction
-file can colour the result. In Claude Code:
+Nothing must mask the skill's text: the vier-augen adapter cannot be active in
+your agent's settings, and a personal instruction file can colour the result.
+The runner checks both before it starts and says what it found; `--isolated`
+gives the agent a throwaway config directory instead.
 
 ```bash
-grep -nE 'guard\.py|vier-augen' ~/.claude/settings.json; ls ~/.claude/CLAUDE.md
+python3 tests/vier-augen/run.py S7          # S7 and the session it continues
+python3 tests/vier-augen/run.py core        # the whole Core set
+python3 tests/vier-augen/run.py --list      # what there is, and which chains
+python3 tests/vier-augen/run.py --report    # the latest result per scenario
 ```
 
-Both should come up empty. Otherwise move it aside for the run, or record it
-with the result.
+The runner builds the fixture (`build-fixture.sh`, default `/tmp/va-fixture`,
+hooks off), applies each scenario's `setup`, takes the baseline, drives the
+agent and prints one status per scenario. Results are written outside this
+repository (`VA_RESULTS`, default `/tmp/va-results`).
 
-1. Build a fresh fixture, outside this repository:
+`--driver manual` prepares the fixture and hands you the session instead: it
+prints the messages to send, and `--finish <id> <session-id>` judges it
+afterwards. Use it for an agent the runner cannot drive.
 
-   ```bash
-   sh tests/vier-augen/build-fixture.sh        # default target: /tmp/va-fixture
-   ```
+A check can come back **undetermined** - an unclassified command, a transcript
+that would not parse. That is never a pass. If the skill's text never reached
+the session the run is **invalid**: it says nothing about the skill.
 
-   It prints where the fixture and its bare remote landed. Read it before the
-   first run: it deletes both paths and rebuilds them, and it takes an
-   alternative target as its one argument.
-
-2. Start a new agent session in the fixture for each scenario, unless it
-   continues the previous one. Invoke the skill first (`/vier-augen` in Claude
-   Code), then send its `steps` in order, each after the agent has answered.
-3. Compare what the agent does with `expected`; anything in `fail_if` is a
-   fail, even when the rest is right. `checks` is the part of that which
-   needs no judgment.
-4. Rebuild the fixture when a scenario changed it.
+Judge `expected` yourself; anything in `fail_if` is a fail, even when the rest
+is right. `checks` is the part that needs no judgment.
 
 Steps are in English; S18-S20 are in Turkish on purpose.
 
@@ -71,7 +72,12 @@ Each scenario ends in a ```json block, the form a program reads. Its fields:
 - `continues` - the scenario whose session this one carries on. `fixture:
   "keep"` starts a new session on the fixture as the previous scenario left
   it. `mode: "headless"` sends the one step as a print-mode prompt, with the
-  skill invoked in the same message.
+  skill invoked in the same message. Writing a scenario that stands alone is a
+  preference: it can be run by itself, and it does not pay for the session in
+  front of it. Use `continues` when the situation genuinely needs the earlier
+  turns. `--only` skips the chain, so a scenario that does need them is then
+  judged against a fixture it never saw - read those results with that in
+  mind.
 - `expected` and `fail_if` - what a reader judges the transcript against.
 - `checks` - the part of that which needs no judgment: what the agent
   attempted, the files against the baseline, the commits and the remote. The

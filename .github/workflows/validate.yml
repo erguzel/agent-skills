@@ -16,6 +16,8 @@ jobs:
       - run: python tools/validate_skills.py
       - run: python tools/validate_scenarios.py
       - run: python tools/test_validate_scenarios.py
+      - run: python tests/vier-augen/test_run.py
+      - run: python tests/vier-augen/test_harness.py
       - run: python tools/test_attribution.py
       - run: python tests/vier-augen/run.py verify
 

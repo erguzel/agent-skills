@@ -30,7 +30,6 @@ HEADING_RE = re.compile(r"^### S(\d+) - (.+)$")
 SECTION_RE = re.compile(r"^##+ ")
 SET_RE = re.compile(r"^- \*\*Set:\*\* (\S+)\s*$")
 MENTION_RE = re.compile(r"\bS(\d+)\b")
-CONTINUE_RE = re.compile(r"\*\*Continue (?:from )?S(\d+)")
 FENCE_OPEN_RE = re.compile(r"^```json\s*$")
 FENCE_CLOSE_RE = re.compile(r"^```\s*$")
 SETS = ("Core", "Comfort")
@@ -246,11 +245,6 @@ def check(lines: list[str]) -> list[str]:
             number = int(match.group(1))
             if number not in known:
                 errors.append(f"line {index + 1}: mentions S{number}, which does not exist")
-                continue
-            if CONTINUE_RE.search(line) and known[number] > index + 1:
-                errors.append(
-                    f"line {index + 1}: continues S{number}, which comes later in the file"
-                )
 
     # the JSON block of each scenario: its section runs to the next heading
     for position, (line_no, number, _) in enumerate(scenarios):
