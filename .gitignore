@@ -1,6 +1,7 @@
-#AGENTS
-.ai/eigenkontext.md
-.ai/github-flow-plan.md
+# Working notes and scratch for whoever is at the keyboard, agent or human.
+# The whole directory stays out: a session checkpoint, a run log or a copied
+# transcript is written for one person and this repository is published.
+/.ai/
 
 # macOS
 .DS_Store
