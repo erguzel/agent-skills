@@ -151,8 +151,7 @@ BR=$(git branch --show-current)      # the default branch name varies
 3. **Agent identity.**
 
    ```bash
-   GIT_AUTHOR_NAME=Claude GIT_AUTHOR_EMAIL=noreply@anthropic.com \
-     git commit -m "test: identity"
+   GIT_AUTHOR_NAME=Claude GIT_AUTHOR_EMAIL=noreply@anthropic.com git commit -m "test: identity"
    ```
 
    Refused: `coding-agent identity in GIT_AUTHOR_IDENT`.
