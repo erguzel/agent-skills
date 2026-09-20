@@ -424,7 +424,7 @@ def plan_runs(plan: list[str], scenarios: dict[str, Scenario]) -> list[Run]:
     return runs
 
 
-def prepare(run: Run, scenarios: dict[str, Scenario], h) -> dict:
+def prepare(run: Run, scenarios: dict[str, Scenario], h, profile) -> dict:
     """Build or keep the fixture, apply each scenario's setup, take the baseline."""
     if run.rebuild or not FIXTURE.exists():
         result = subprocess.run(["sh", str(BUILD_FIXTURE), str(FIXTURE)],
@@ -437,7 +437,7 @@ def prepare(run: Run, scenarios: dict[str, Scenario], h) -> dict:
                                   capture_output=True, text=True)
             if done.returncode != 0:
                 raise RuntimeError(f"{sid} setup failed ({command!r}): {done.stderr.strip()}")
-    baseline = h.save_baseline(FIXTURE, REMOTE)
+    baseline = h.save_baseline(FIXTURE, REMOTE, profile)
     baseline["run"] = run.scenarios
     (FIXTURE / ".git" / "va-baseline.json").write_text(
         json.dumps(baseline), encoding="utf-8")
@@ -626,7 +626,7 @@ def drive(rest: list[str], args) -> None:
         label = " -> ".join(run.scenarios)
         print(f"\n=== {label} ===")
         try:
-            baseline = prepare(run, scenarios, h)
+            baseline = prepare(run, scenarios, h, profile)
         except RuntimeError as exc:
             sys.exit(str(exc))
         if args.driver == "manual":

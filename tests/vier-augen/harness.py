@@ -287,10 +287,16 @@ def git(*args: str, cwd: Path, check: bool = True) -> str:
     return result.stdout.strip()
 
 
-def _tracked_files(fixture: Path):
+def agent_dirs(profile) -> set[str]:
+    """The top-level directories the agent owns in the fixture - where the
+    skill is linked in - and so not part of the tree the scenarios measure."""
+    return {Path(d).parts[0] for d in profile.SKILL_DIRS}
+
+
+def _tracked_files(fixture: Path, skip: set[str]):
     for path in fixture.rglob("*"):
         rel = path.relative_to(fixture)
-        if ".git" in rel.parts or ".claude" in rel.parts:
+        if ".git" in rel.parts or rel.parts[0] in skip:
             continue
         if path.is_symlink() or not path.is_file():
             continue
@@ -304,15 +310,15 @@ def file_hash(fixture: Path, rel: str) -> Optional[str]:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def current_files(fixture: Path) -> dict[str, Optional[str]]:
-    return {rel: file_hash(fixture, rel) for rel, _ in _tracked_files(fixture)}
+def current_files(fixture: Path, skip: set[str]) -> dict[str, Optional[str]]:
+    return {rel: file_hash(fixture, rel) for rel, _ in _tracked_files(fixture, skip)}
 
 
-def save_baseline(fixture: Path, remote: Path) -> dict:
+def save_baseline(fixture: Path, remote: Path, profile) -> dict:
     return {
         "head": git("rev-parse", "HEAD", cwd=fixture),
         "remote": git("rev-parse", "main", cwd=remote, check=False),
-        "files": current_files(fixture),
+        "files": current_files(fixture, agent_dirs(profile)),
     }
 
 
@@ -461,7 +467,7 @@ def build_check(name: str, args: list, opts: dict) -> Callable[[Context], Result
 
     def changed_only(ctx: Context) -> Result:
         allowed = set(args[0])
-        before, after = ctx.baseline["files"], current_files(ctx.fixture)
+        before, after = ctx.baseline["files"], current_files(ctx.fixture, agent_dirs(ctx.profile))
         moved = {rel for rel in set(before) | set(after) if before.get(rel) != after.get(rel)}
         return moved <= allowed
 
@@ -476,7 +482,7 @@ def build_check(name: str, args: list, opts: dict) -> Callable[[Context], Result
         return re.search(args[1], path.read_text(encoding="utf-8", errors="replace")) is None
 
     def no_file_contains(ctx: Context) -> Result:
-        for _, path in _tracked_files(ctx.fixture):
+        for _, path in _tracked_files(ctx.fixture, agent_dirs(ctx.profile)):
             try:
                 if re.search(args[0], path.read_text(encoding="utf-8", errors="replace")):
                     return False
