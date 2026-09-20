@@ -331,11 +331,18 @@ def verify_hooks(repo: Path, remote: Path, install: subprocess.CompletedProcess,
 GUARD = SKILL / "adapters" / "claude-code" / "guard.py"
 
 
-def probe(command: str, cwd: Path) -> subprocess.CompletedProcess:
+def probe(command: str, cwd: Path, guard: Path = GUARD) -> subprocess.CompletedProcess:
     """Hand the guard one Bash tool call on stdin, the way the runtime does."""
     payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": command}})
-    return subprocess.run([sys.executable, str(GUARD)], input=payload, cwd=cwd,
+    return subprocess.run([sys.executable, str(guard)], input=payload, cwd=cwd,
                           capture_output=True, text=True)
+
+
+def decision_of(proc: subprocess.CompletedProcess) -> str:
+    try:
+        return json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecision"]
+    except (ValueError, KeyError, TypeError):
+        return ""
 
 
 def verify_guard(cwd: Path, report: Report) -> None:
@@ -357,19 +364,25 @@ def verify_guard(cwd: Path, report: Report) -> None:
 
     proc = probe("git -C . add probe.txt", cwd)
     answers.append(output(proc))
-    decision = ""
-    try:
-        decision = json.loads(proc.stdout)["hookSpecificOutput"]["permissionDecision"]
-    except (ValueError, KeyError, TypeError):
-        pass
     report.add("the guard asks for `git -C . add`, which the rules alone would miss",
-               proc.returncode == 0 and decision == "ask",
+               proc.returncode == 0 and decision_of(proc) == "ask",
                f"exit={proc.returncode}, said: {output(proc).strip()!r}")
 
     report.add("the guard decides per command rather than answering alike",
                len(set(answers)) == 3,
                "two of the three probes came back with the same answer - check that "
                "python3 is there and that the guard's path resolves.")
+
+    # The guard copied out alone, without the skill's classifier beside it: it
+    # must ask for everything and say why, never fall open.
+    alone = cwd / "guard-alone"
+    alone.mkdir()
+    shutil.copy(GUARD, alone / "guard.py")
+    proc = probe("git status", cwd, guard=alone / "guard.py")
+    report.add("the guard asks for everything when the classifier is missing, rather than fall open",
+               proc.returncode == 0 and decision_of(proc) == "ask"
+               and "classifier" in proc.stderr,
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
 
 
 # --------------------------------------------------------------------------
@@ -411,7 +424,7 @@ def plan_runs(plan: list[str], scenarios: dict[str, Scenario]) -> list[Run]:
     return runs
 
 
-def prepare(run: Run, scenarios: dict[str, Scenario], h) -> dict:
+def prepare(run: Run, scenarios: dict[str, Scenario], h, profile) -> dict:
     """Build or keep the fixture, apply each scenario's setup, take the baseline."""
     if run.rebuild or not FIXTURE.exists():
         result = subprocess.run(["sh", str(BUILD_FIXTURE), str(FIXTURE)],
@@ -424,7 +437,7 @@ def prepare(run: Run, scenarios: dict[str, Scenario], h) -> dict:
                                   capture_output=True, text=True)
             if done.returncode != 0:
                 raise RuntimeError(f"{sid} setup failed ({command!r}): {done.stderr.strip()}")
-    baseline = h.save_baseline(FIXTURE, REMOTE)
+    baseline = h.save_baseline(FIXTURE, REMOTE, profile)
     baseline["run"] = run.scenarios
     (FIXTURE / ".git" / "va-baseline.json").write_text(
         json.dumps(baseline), encoding="utf-8")
@@ -613,7 +626,7 @@ def drive(rest: list[str], args) -> None:
         label = " -> ".join(run.scenarios)
         print(f"\n=== {label} ===")
         try:
-            baseline = prepare(run, scenarios, h)
+            baseline = prepare(run, scenarios, h, profile)
         except RuntimeError as exc:
             sys.exit(str(exc))
         if args.driver == "manual":
@@ -702,8 +715,8 @@ def main() -> None:
             return
         print("Affected: " + " ".join(affected))
         print("Run order: " + " ".join(resolve(affected, scenarios, only=args.only)))
-        sys.exit("The scenarios are not runnable from here yet: the driver is not here. "
-                 "Until it is, tests/vier-augen/scenarios.md carries them for a hand-run.")
+        print("Run them: python3 tests/vier-augen/run.py " + " ".join(affected))
+        return
     targets = [t.lower() for t in args.targets]
     if not targets:
         parser.print_help()

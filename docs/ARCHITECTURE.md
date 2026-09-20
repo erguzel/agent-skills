@@ -113,15 +113,14 @@ for skills; which tool names write, which only read, and which are safe; how
 to launch one headless turn and how to resume the session for the next; a
 preflight that refuses to measure a session an adapter or a personal
 instruction file would mask; and how to find a transcript and turn it into
-the harness's event list. Apart from the two exceptions below, the harness
-names no tool and no path of any agent.
+the harness's event list. The harness names no tool and no path of any
+agent; the directories an agent owns in the fixture, which the file checks
+leave out, are read from the profile too.
 
-Two things cross that line today. The command classifier in the harness is
-imported from the Claude Code adapter's `guard.py`, so that the test and the
-guard agree on what a command does; ADR 0003 records it as a known exception,
-and the classifier is to move into a neutral module inside the skill. And the
-walk over the fixture's files skips the directory one agent keeps its skills
-in, a path that belongs in that agent's profile.
+The harness classifies a command with the skill's own module, `lib/tiers.py`,
+the same one every adapter's guard reads, so the test and the guard cannot
+disagree on what a command does (ADR 0007; ADR 0003 had recorded the earlier
+import from one adapter as a known exception).
 
 ### Sessions, chains and judgment
 

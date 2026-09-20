@@ -115,7 +115,7 @@ git("add", ".")
 git("commit", "-qm", "chore: base")
 git("remote", "add", "origin", str(remote))
 git("push", "-q", "origin", "main")
-baseline = h.save_baseline(fixture, remote)
+baseline = h.save_baseline(fixture, remote, profile)
 
 
 def ctx(block_positions=None, transcript=None):

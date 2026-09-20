@@ -151,6 +151,24 @@ case("--affected against HEAD in this repository exits cleanly",
      proc.returncode == 0 and "no changes" in proc.stdout,
      f"exit={proc.returncode}, stdout={proc.stdout.strip()!r}")
 
+# When a change does touch SKILL.md, --affected names the scenarios and the
+# command that runs them, and exits 0: naming them is its whole job.
+_real_affected = r.cmd_affected
+r.cmd_affected = lambda base, scenarios, repo=None: ["S1", "S13"]
+out, code, argv = io.StringIO(), None, sys.argv
+sys.argv = [run_py, "--affected", "HEAD"]
+try:
+    with contextlib.redirect_stdout(out):
+        r.main()
+except SystemExit as exc:
+    code = exc.code
+finally:
+    sys.argv, r.cmd_affected = argv, _real_affected
+case("--affected with affected scenarios names them and exits 0",
+     code in (None, 0) and "Affected: S1 S13" in out.getvalue()
+     and "run.py S1 S13" in out.getvalue(),
+     f"exit={code!r}, stdout={out.getvalue().strip()!r}")
+
 # -- the driver, end to end with a fake agent (no tokens) ------------------
 # A fake `claude` writes a format-faithful transcript and, on sabotage, mutates
 # the fixture. It lets the whole driver run in CI without a real agent.

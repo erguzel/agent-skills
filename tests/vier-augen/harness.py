@@ -40,16 +40,17 @@ MUTATING = {"write", "delete", "git_add", "git_commit", "git_push", "git_change"
             "install", "publish", "force_push"}
 
 
-def _load_guard():
-    """The adapter's guard is the single command classifier; the harness reuses it."""
-    path = SKILL_DIR / "adapters" / "claude-code" / "guard.py"
-    spec = importlib.util.spec_from_file_location("va_guard", path)
+def _load_tiers():
+    """The skill's classifier is the one place that says what a command does;
+    the guards and this harness read the same module (ADR 0007)."""
+    path = SKILL_DIR / "lib" / "tiers.py"
+    spec = importlib.util.spec_from_file_location("va_tiers", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
-GUARD = _load_guard()
+TIERS = _load_tiers()
 
 READ_GIT = {"status", "diff", "log", "show", "blame", "grep", "ls-files", "rev-parse",
             "describe", "shortlog", "reflog", "cat-file", "check-ignore", "merge-base",
@@ -205,17 +206,17 @@ def _git_sub(args: list[str]):
     i = 0
     while i < len(args) and args[i].startswith("-"):
         opt = args[i].split("=", 1)[0]
-        i += 2 if (opt in GUARD.GIT_OPTS_WITH_VALUE and "=" not in args[i]) else 1
+        i += 2 if (opt in TIERS.GIT_OPTS_WITH_VALUE and "=" not in args[i]) else 1
     return (args[i], args[i + 1:]) if i < len(args) else (None, [])
 
 
 def bash_kinds(command: str) -> set[str]:
     kinds: set[str] = set()
     text = mask_quotes(FD_DUP.sub(" ", strip_heredocs(command)))
-    for segment in GUARD.SEPARATORS.split(text):
+    for segment in TIERS.SEPARATORS.split(text):
         # A split through a "$( ... )" leaves the surrounding quote behind; a
         # lone quote is punctuation, not a program.
-        tokens = [token for token in GUARD.strip_prefix(GUARD.words(segment))
+        tokens = [token for token in TIERS.strip_prefix(TIERS.words(segment))
                   if token.strip("\"'")]
         if not tokens:
             continue
@@ -224,14 +225,14 @@ def bash_kinds(command: str) -> set[str]:
             sub, rest = _git_sub(args)
             if sub is None:
                 continue
-            decision = GUARD.check_git(args)
+            decision = TIERS.check_git(args)
             if sub == "add":
                 kinds.add("git_add")
             elif sub == "commit":
                 kinds.add("git_commit")
             elif sub == "push":
                 kinds.add("git_push")
-                if decision and decision[0] == "deny":
+                if decision and decision[0] == TIERS.REWRITE:
                     kinds.add("force_push")
             elif sub in ("rm", "clean", "restore") or (sub == "checkout" and "--" in rest):
                 kinds.add("delete")
@@ -239,11 +240,11 @@ def bash_kinds(command: str) -> set[str]:
                 kinds.add("git_read")
             else:
                 kinds.add("git_change")
-        elif prog in GUARD.DELETE_PROGRAMS or (prog == "find" and "-delete" in args):
+        elif prog in TIERS.DELETE_PROGRAMS or (prog == "find" and "-delete" in args):
             kinds.add("delete")
         elif prog in WRITE_PROGRAMS or (prog in ("sed", "perl") and any(a.startswith("-i") for a in args)):
             kinds.add("write")
-        elif args and (prog, args[0]) in GUARD.PUBLISH:
+        elif args and (prog, args[0]) in TIERS.PUBLISH:
             kinds.add("publish")
         elif prog in INSTALLERS and args and args[0] in ("install", "i", "ci", "add"):
             kinds.add("install")
@@ -286,10 +287,16 @@ def git(*args: str, cwd: Path, check: bool = True) -> str:
     return result.stdout.strip()
 
 
-def _tracked_files(fixture: Path):
+def agent_dirs(profile) -> set[str]:
+    """The top-level directories the agent owns in the fixture - where the
+    skill is linked in - and so not part of the tree the scenarios measure."""
+    return {Path(d).parts[0] for d in profile.SKILL_DIRS}
+
+
+def _tracked_files(fixture: Path, skip: set[str]):
     for path in fixture.rglob("*"):
         rel = path.relative_to(fixture)
-        if ".git" in rel.parts or ".claude" in rel.parts:
+        if ".git" in rel.parts or rel.parts[0] in skip:
             continue
         if path.is_symlink() or not path.is_file():
             continue
@@ -303,15 +310,15 @@ def file_hash(fixture: Path, rel: str) -> Optional[str]:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def current_files(fixture: Path) -> dict[str, Optional[str]]:
-    return {rel: file_hash(fixture, rel) for rel, _ in _tracked_files(fixture)}
+def current_files(fixture: Path, skip: set[str]) -> dict[str, Optional[str]]:
+    return {rel: file_hash(fixture, rel) for rel, _ in _tracked_files(fixture, skip)}
 
 
-def save_baseline(fixture: Path, remote: Path) -> dict:
+def save_baseline(fixture: Path, remote: Path, profile) -> dict:
     return {
         "head": git("rev-parse", "HEAD", cwd=fixture),
         "remote": git("rev-parse", "main", cwd=remote, check=False),
-        "files": current_files(fixture),
+        "files": current_files(fixture, agent_dirs(profile)),
     }
 
 
@@ -460,7 +467,7 @@ def build_check(name: str, args: list, opts: dict) -> Callable[[Context], Result
 
     def changed_only(ctx: Context) -> Result:
         allowed = set(args[0])
-        before, after = ctx.baseline["files"], current_files(ctx.fixture)
+        before, after = ctx.baseline["files"], current_files(ctx.fixture, agent_dirs(ctx.profile))
         moved = {rel for rel in set(before) | set(after) if before.get(rel) != after.get(rel)}
         return moved <= allowed
 
@@ -475,7 +482,7 @@ def build_check(name: str, args: list, opts: dict) -> Callable[[Context], Result
         return re.search(args[1], path.read_text(encoding="utf-8", errors="replace")) is None
 
     def no_file_contains(ctx: Context) -> Result:
-        for _, path in _tracked_files(ctx.fixture):
+        for _, path in _tracked_files(ctx.fixture, agent_dirs(ctx.profile)):
             try:
                 if re.search(args[0], path.read_text(encoding="utf-8", errors="replace")):
                     return False

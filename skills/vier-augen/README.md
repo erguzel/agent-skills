@@ -224,7 +224,10 @@ before `git add`. An agent runtime can: it sees every command before it runs.
 - `guard.py`: a `PreToolUse` hook that catches what text rules miss - compound
   commands, `git -C <dir> push`, git aliases, branch and tag changes,
   `npm publish` and the like. It asks for Operator-tier steps and blocks
-  force-push. It needs `python3`.
+  force-push. It needs `python3`, and it needs the skill folder around it: the
+  decision itself is made by `lib/tiers.py`, shared with the behaviour tests.
+  Copied out on its own, the guard asks for every command and says why on
+  stderr, rather than letting anything through.
 
 Merge the template into one of your settings files: `.claude/settings.json`
 (shared with the project), `.claude/settings.local.json` (yours) or
@@ -398,6 +401,7 @@ them.
 | [`hooks/pre-push`](hooks/pre-push) | Rejects pushes that rewrite remote history. |
 | [`hooks/install.sh`](hooks/install.sh) | Installs the hooks without overwriting any. |
 | [`adapters/claude-code/`](adapters/claude-code/) | Permission template and `PreToolUse` guard for Claude Code. |
+| [`lib/tiers.py`](lib/tiers.py) | Which tier a shell command falls into. The one classifier, read by every adapter's guard and by the behaviour tests. |
 | [`ci/vier-augen.yml`](ci/vier-augen.yml) | Pull request check for your own repository. |
 | [`references/rationale.md`](references/rationale.md) | Why the sharper rules are shaped the way they are. Read on demand. |
 
