@@ -76,6 +76,19 @@ for command, want in LIVE:
     case(f"a live compound command classifies exactly: {command[:34]!r}", got == want,
          f"got {sorted(got)}, want {sorted(want)}")
 
+# From the second live chain: `2>&1` used to split into a command called "1",
+# and a `>` inside a quoted string inside `$( ... )` looked like a redirect.
+case("a duplicated file descriptor is not a command",
+     h.bash_kinds("ls -la && wc -c README.md 2>&1") == {"read"},
+     str(h.bash_kinds("ls -la && wc -c README.md 2>&1")))
+LIVE2 = ('echo "hooksPath: $(git --no-optional-locks config core.hooksPath || '
+         "echo '<unset>')\" && ls -1 \"$(git --no-optional-locks rev-parse "
+         '--git-path hooks)" && ls -1 .claude/skills/vier-augen/hooks/ 2>&1')
+case("a quoted angle bracket inside a substitution is not a redirect",
+     h.bash_kinds(LIVE2) == {"read", "git_read"}, str(h.bash_kinds(LIVE2)))
+case("a real redirect is still a write",
+     "write" in h.bash_kinds("echo hi > f.txt"))
+
 case("a heredoc body is data, not commands",
      h.bash_kinds("cat <<EOF\nrm -rf /\nEOF") == {"read"})
 case("a redirect beside a heredoc is still a write",

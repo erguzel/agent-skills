@@ -64,6 +64,9 @@ READ_PROGRAMS = {"ls", "cat", "head", "tail", "wc", "grep", "egrep", "rg", "stat
 INSTALLERS = {"npm", "pnpm", "yarn", "pip", "pip3", "brew", "bun"}
 REDIRECT = re.compile(r"(?<![0-9&>])>>?\s*(?!/dev/null)(?!&)[^\s|;&]")
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1")
+# `2>&1` and friends duplicate a file descriptor. They are not a redirect to a
+# file, and the `&` in them must not be read as a command separator.
+FD_DUP = re.compile(r"\d*>&\d+")
 
 
 def strip_heredocs(command: str) -> str:
@@ -115,7 +118,7 @@ def mask_quotes(command: str) -> str:
                         index += 1
                         break
                 index += 1
-            out.append(command[start:index])
+            out.append("$(" + mask_quotes(command[start + 2:index - 1]) + ")")
             continue
         out.append("x" if quote and not char.isspace() else char)
         index += 1
@@ -208,7 +211,7 @@ def _git_sub(args: list[str]):
 
 def bash_kinds(command: str) -> set[str]:
     kinds: set[str] = set()
-    text = mask_quotes(strip_heredocs(command))
+    text = mask_quotes(FD_DUP.sub(" ", strip_heredocs(command)))
     for segment in GUARD.SEPARATORS.split(text):
         # A split through a "$( ... )" leaves the surrounding quote behind; a
         # lone quote is punctuation, not a program.
