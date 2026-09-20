@@ -63,6 +63,63 @@ READ_PROGRAMS = {"ls", "cat", "head", "tail", "wc", "grep", "egrep", "rg", "stat
                  "tr", "column", "od", "xxd", "sha256sum", "shasum", "md5sum", "readlink"}
 INSTALLERS = {"npm", "pnpm", "yarn", "pip", "pip3", "brew", "bun"}
 REDIRECT = re.compile(r"(?<![0-9&>])>>?\s*(?!/dev/null)(?!&)[^\s|;&]")
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1")
+
+
+def strip_heredocs(command: str) -> str:
+    """Drop heredoc bodies: they are data the command reads, not commands."""
+    out, rest = [], command
+    while True:
+        match = HEREDOC.search(rest)
+        if not match:
+            out.append(rest)
+            break
+        head, tail = rest[:match.start()], rest[match.end():]
+        newline = tail.find("\n")
+        if newline == -1:                   # the marker ends the command
+            out.append(head + tail)
+            break
+        out.append(head + tail[:newline] + "\n")   # the rest of the line still runs
+        lines, body = tail[newline + 1:].splitlines(True), None
+        for index, line in enumerate(lines):
+            if line.strip() == match.group(2):
+                body = index
+                break
+        rest = "".join(lines[body + 1:]) if body is not None else ""
+    return "".join(out)
+
+
+def mask_quotes(command: str) -> str:
+    """Blank out quoted text so separators inside it do not split a command.
+
+    A `$( ... )` substitution inside double quotes really does run, so it is
+    left visible; everything else between quotes becomes filler.
+    """
+    out, index, quote = [], 0, ""
+    while index < len(command):
+        char = command[index]
+        if not quote and char in "'\"":
+            quote, out, index = char, out + [char], index + 1
+            continue
+        if quote and char == quote:
+            quote, out, index = "", out + [char], index + 1
+            continue
+        if quote == '"' and command.startswith("$(", index):
+            depth, start = 0, index
+            while index < len(command):
+                if command[index] == "(":
+                    depth += 1
+                elif command[index] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        index += 1
+                        break
+                index += 1
+            out.append(command[start:index])
+            continue
+        out.append("x" if quote and not char.isspace() else char)
+        index += 1
+    return "".join(out)
 
 
 # --------------------------------------------------------------------------
@@ -105,10 +162,12 @@ class Transcript:
             start = found + 1
         return positions
 
-    def agent_text(self, after: Optional[int] = None) -> str:
+    def agent_text(self, after: Optional[int] = None,
+                   upto: Optional[int] = None) -> str:
         lo = after if after is not None else -1
+        hi = upto if upto is not None else len(self.events)
         return "\n".join(e.text for i, e in enumerate(self.events)
-                         if i > lo and e.kind == "text")
+                         if lo < i < hi and e.kind == "text")
 
 
 def _norm(text: str) -> str:
@@ -149,8 +208,12 @@ def _git_sub(args: list[str]):
 
 def bash_kinds(command: str) -> set[str]:
     kinds: set[str] = set()
-    for segment in GUARD.SEPARATORS.split(command):
-        tokens = GUARD.strip_prefix(GUARD.words(segment))
+    text = mask_quotes(strip_heredocs(command))
+    for segment in GUARD.SEPARATORS.split(text):
+        # A split through a "$( ... )" leaves the surrounding quote behind; a
+        # lone quote is punctuation, not a program.
+        tokens = [token for token in GUARD.strip_prefix(GUARD.words(segment))
+                  if token.strip("\"'")]
         if not tokens:
             continue
         prog, args = os.path.basename(tokens[0]), tokens[1:]
@@ -186,7 +249,7 @@ def bash_kinds(command: str) -> set[str]:
             kinds.add("read")
         else:
             kinds.add("exec")               # unknown: might change files
-    if REDIRECT.search(command):
+    if REDIRECT.search(text):
         kinds.add("write")
     return kinds
 
@@ -260,6 +323,7 @@ class Context:
     baseline: dict
     transcript: Optional[Transcript] = None
     positions: Optional[list[int]] = None
+    limit: Optional[int] = None          # first event of the next scenario, if any
     notes: list[str] = field(default_factory=list)
 
     def note(self, text: str) -> None:
@@ -272,7 +336,9 @@ class Context:
         if (after is not None or before is not None) and self.positions is None:
             return None
         lo = self.positions[after - 1] if after else -1
-        hi = self.positions[before - 1] if before else len(self.transcript.events)
+        hi = (self.positions[before - 1] if before
+              else (self.limit if self.limit is not None
+                    else len(self.transcript.events)))
         return [e for i, e in enumerate(self.transcript.events)
                 if lo < i < hi and e.kind == "tool"]
 
@@ -330,7 +396,8 @@ def build_check(name: str, args: list, opts: dict) -> Callable[[Context], Result
         if any(kinds & action_kinds(e, ctx.profile) and (where is None or where(e)) for e in events):
             return False
         if kinds & {"write", "delete"}:
-            unclear = [e for e in events if {"exec", "unknown"} & action_kinds(e, ctx.profile)]
+            unclear = [e for e in events if {"exec", "unknown"} & action_kinds(e, ctx.profile)
+                       and (where is None or where(e))]
             for event in unclear:
                 ctx.note(describe(event))
             if unclear:
@@ -347,24 +414,27 @@ def build_check(name: str, args: list, opts: dict) -> Callable[[Context], Result
 
     def command_check(want: bool) -> Callable[[Context], Result]:
         def fn(ctx: Context) -> Result:
-            if ctx.transcript is None or not ctx.transcript.usable:
+            events = ctx.window(None, None)
+            if events is None:
                 return None
             matcher = _bash_matcher(args[0])
-            hit = any(matcher(e) for e in ctx.transcript.events)
+            hit = any(matcher(e) for e in events)
             return hit if want else not hit
         return fn
 
     def no_full_read(ctx: Context) -> Result:
-        if ctx.transcript is None or not ctx.transcript.usable:
+        events = ctx.window(None, None)
+        if events is None:
             return None
         matcher = _full_read(args[0], ctx.profile)
-        return not any(matcher(e) for e in ctx.transcript.events)
+        return not any(matcher(e) for e in events)
 
     def says(ctx: Context) -> Result:
         if ctx.transcript is None or not ctx.transcript.usable:
             return None
         text = ctx.transcript.agent_text(
-            ctx.positions[opts["after"] - 1] if opts.get("after") and ctx.positions else None)
+            ctx.positions[opts["after"] - 1] if opts.get("after") and ctx.positions else None,
+            upto=ctx.limit)
         hits = len(re.findall(args[0], text, re.I))
         times = opts.get("times", "any")
         if times == "never":

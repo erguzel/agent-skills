@@ -46,9 +46,11 @@ SCENARIO = re.compile(r"^S\d{1,2}$", re.IGNORECASE)
 SETS = {"core", "comfort"}
 SCENARIOS_MD = HERE / "scenarios.md"
 COVERS_RE = re.compile(r"^- \*\*Covers:\*\* (.+)$")
-FIXTURE = Path(os.environ.get("VA_FIXTURE", tempfile.gettempdir() + "/va-fixture"))
+# /tmp, not the platform temp dir: build-fixture.sh and the documents say
+# /tmp/va-fixture, and on macOS gettempdir() is a per-user folder instead.
+FIXTURE = Path(os.environ.get("VA_FIXTURE", "/tmp/va-fixture"))
 REMOTE = FIXTURE.parent / (FIXTURE.name + "-remote.git")
-RESULTS = Path(os.environ.get("VA_RESULTS", tempfile.gettempdir() + "/va-results"))
+RESULTS = Path(os.environ.get("VA_RESULTS", "/tmp/va-results"))
 BUILD_FIXTURE = HERE / "build-fixture.sh"
 
 
@@ -440,17 +442,66 @@ def prompts_for(run: Run, scenarios: dict[str, Scenario], invoke: str):
     return [invoke] + steps, False
 
 
-def drive_headless(run, scenarios, profile, env) -> str:
-    prompts, single = prompts_for(run, scenarios, profile.INVOKE)
+def judge_one(sid, scenarios, profile, env, session_id, baseline, h,
+              steps_before: list[str]) -> dict:
+    """Judge one scenario against the session as it stands right now.
+
+    Called between scenarios, so the transcript holds nothing from the ones
+    that follow and the fixture is in the state this scenario left it.
+    """
+    block = scenarios[sid].block
+    transcript = profile.load_transcript(session_id, env)
+    loaded: object = None
+    positions = None
+    if transcript is None or not transcript.usable:
+        print(f"  {sid}: transcript not readable; those checks are undetermined.")
+    else:
+        loaded = h.skill_loaded(transcript)
+        found = transcript.step_positions(steps_before + block["steps"])
+        if found is None:
+            print(f"  {sid}: not every message was found; order-based checks "
+                  "are undetermined.")
+        else:
+            positions = found[len(steps_before):]
+        if loaded is False:
+            print(f"  {sid}: the skill text did not reach the session - INVALID.")
+    ctx = h.Context(fixture=FIXTURE, remote=REMOTE, profile=profile,
+                    baseline=baseline, transcript=transcript, positions=positions)
+    return h.run_checks(block, ctx, loaded)
+
+
+def drive_headless(run, scenarios, profile, env, baseline, h) -> tuple[str, dict]:
+    """Drive the session scenario by scenario, judging each as it finishes."""
     session_id = str(uuid.uuid4())
-    for index, prompt in enumerate(prompts):
-        argv = profile.launch_argv(session_id, prompt, resume=index > 0)
-        subprocess.run(argv, cwd=FIXTURE, env=env)
-    return session_id
+    report: dict = {}
+    steps_before: list[str] = []
+    turn = 0
+    for position, sid in enumerate(run.scenarios):
+        block = scenarios[sid].block
+        prompts = list(block["steps"])
+        if position == 0:
+            if len(run.scenarios) == 1 and block.get("mode") == "headless":
+                prompts = [f"{profile.INVOKE}\n\n{prompts[0]}"]
+            else:
+                prompts = [profile.INVOKE] + prompts
+        for prompt in prompts:
+            argv = profile.launch_argv(session_id, prompt, resume=turn > 0)
+            subprocess.run(argv, cwd=FIXTURE, env=env)
+            turn += 1
+        report[sid] = judge_one(sid, scenarios, profile, env, session_id,
+                                baseline, h, steps_before)
+        steps_before += block["steps"]
+    return session_id, report
 
 
 def evaluate(run, scenarios, profile, env, session_id, baseline, h) -> dict:
-    """Judge each scenario in the run and return {sid: {status, items}}."""
+    """Judge a finished session in one go - the manual path.
+
+    Every scenario's checks are bounded above by the next scenario's first
+    message, so a later turn cannot be read as this one's. The fixture,
+    however, is only seen as the whole session left it: a state check in a
+    chained scenario is therefore weaker here than under the driver.
+    """
     transcript = profile.load_transcript(session_id, env)
     loaded: object = None
     all_steps: list[str] = []
@@ -470,10 +521,15 @@ def evaluate(run, scenarios, profile, env, session_id, baseline, h) -> dict:
     for sid in run.scenarios:
         block = scenarios[sid].block
         count = len(block["steps"])
-        local = positions[offset:offset + count] if positions is not None else None
+        local = limit = None
+        if positions is not None:
+            local = positions[offset:offset + count]
+            if offset + count < len(positions):
+                limit = positions[offset + count]
         offset += count
         ctx = h.Context(fixture=FIXTURE, remote=REMOTE, profile=profile,
-                        baseline=baseline, transcript=transcript, positions=local)
+                        baseline=baseline, transcript=transcript, positions=local,
+                        limit=limit)
         report[sid] = h.run_checks(block, ctx, loaded)
     return report
 
@@ -566,8 +622,7 @@ def drive(rest: list[str], args) -> None:
             print(f"\nStart from {FIXTURE} with the {profile.NAME} agent, then:")
             print(f"  python3 tests/vier-augen/run.py --finish {run.scenarios[-1]} <session-id>")
             continue
-        session_id = drive_headless(run, scenarios, profile, env)
-        report = evaluate(run, scenarios, profile, env, session_id, baseline, h)
+        session_id, report = drive_headless(run, scenarios, profile, env, baseline, h)
         out = save_results(report, profile, session_id)
         overall = show_report(report) and overall
         print(f"  saved: {out}")

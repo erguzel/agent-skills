@@ -57,6 +57,30 @@ for command, forbidden in [
     mutating = kinds & h.MUTATING
     case(f"bash_kinds leaves {command!r} free", not mutating, str(kinds))
 
+# Commands a live agent actually ran in the S3-S7 chain. Quoting and heredocs
+# used to break the classifier into fragments that looked like unknown programs.
+LIVE = [
+    ('echo "---TRACKED---" && git --no-optional-locks ls-files && '
+     'grep -rin -E "licen[cs]e" --exclude-dir=.git . || echo "(no match outside big.log)"',
+     {"read", "git_read"}),
+    ("sed -i '' 's/projcet/project/' README.md && cat >> CHANGELOG.md <<'EOF'\n\n"
+     "## Unreleased\n\n- Fix typo in README.\nEOF\n"
+     'echo "---DIFF---" && git --no-optional-locks diff',
+     {"read", "git_read", "write"}),
+    ('echo "---hooksPath---" && git --no-optional-locks config core.hooksPath || '
+     'echo "(unset)" ; ls "$(git --no-optional-locks rev-parse --git-path hooks)"',
+     {"read", "git_read"}),
+]
+for command, want in LIVE:
+    got = h.bash_kinds(command)
+    case(f"a live compound command classifies exactly: {command[:34]!r}", got == want,
+         f"got {sorted(got)}, want {sorted(want)}")
+
+case("a heredoc body is data, not commands",
+     h.bash_kinds("cat <<EOF\nrm -rf /\nEOF") == {"read"})
+case("a redirect beside a heredoc is still a write",
+     h.bash_kinds("cat <<EOF > out.txt\nx\nEOF") == {"read", "write"})
+
 # -- a small real fixture --------------------------------------------------
 work = Path(tempfile.mkdtemp(prefix="va-test-harness-"))
 fixture, remote = work / "repo", work / "remote.git"
@@ -154,6 +178,17 @@ case("says never fails when present",
      check("says", "git restore", times="never")(c) is False)
 case("no_full_read holds when nothing was read whole",
      check("no_full_read", "old.txt")(c) is True)
+
+# A2: a path-scoped no_action ignores unclassified commands about other paths.
+noisy = lines + [{"type": "assistant", "message": {"content": [
+    {"type": "tool_use", "name": "Bash", "input": {"command": "frobnicate --all"}}]}}]
+tr_noisy = profile.parse_transcript("\n".join(json.dumps(x) for x in noisy))
+c_noisy = ctx(block_positions=tr_noisy.step_positions(["Delete old.txt."]),
+              transcript=tr_noisy)
+case("an unclassified command makes an unscoped write check undetermined",
+     check("no_action", ["write"])(c_noisy) is None)
+case("a path-scoped check ignores a command about another path",
+     check("no_action", ["write"], path="docs/setup.md")(c_noisy) is True)
 
 # a transcript that actually deletes: no_action must catch it
 lines2 = lines + [{"type": "assistant", "message": {"content": [
