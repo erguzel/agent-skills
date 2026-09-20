@@ -57,6 +57,10 @@ tests/
     ├── profiles/           # per-agent: how to drive it and read its transcript
     ├── test_run.py         # tests for selection and the driver, in CI
     └── test_harness.py     # tests for the checks and the profile, in CI
+docs/
+├── ARCHITECTURE.md         # the parts, and what each promises the others
+├── ROADMAP.md              # what is being worked on, and what waits on it
+└── adr/                    # decisions about how this repository is built and tested
 .github/workflows/
 └── validate.yml            # runs the validator on every push and pull request
 AGENTS.md                   # how agents should behave inside THIS repo
