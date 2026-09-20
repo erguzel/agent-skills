@@ -130,7 +130,7 @@ case("commit_clean fails on non-ascii", check("commit_clean")(ctx()) is False)
 lines = [
     {"type": "user", "message": {"content": [
         {"type": "text", "text": "<command-name>vier-augen</command-name>"}]}},
-    {"type": "assistant", "message": {"model": "claude-opus-5", "content": [
+    {"type": "assistant", "message": {"model": "test-model-1", "content": [
         {"type": "tool_use", "name": "Bash", "input": {"command": "git status"}},
         {"type": "text", "text": "Vier-Augen is active. Nothing changed."}]}},
     {"type": "user", "message": {"content": "Delete old.txt."}},
@@ -141,7 +141,7 @@ raw = "\n".join(json.dumps(line) for line in lines)
 tr = profile.parse_transcript(raw)
 case("the invoke wrapper is dropped from user events",
      [e.text for e in tr.events if e.kind == "user"] == ["Delete old.txt."])
-case("the model is read", tr.model == "claude-opus-5")
+case("the model is read", tr.model == "test-model-1")
 case("skill_loaded is false on unrelated text", h.skill_loaded(tr) is False)
 
 positions = tr.step_positions(["Delete old.txt."])
