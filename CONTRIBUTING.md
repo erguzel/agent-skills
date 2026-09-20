@@ -47,3 +47,7 @@ on.
 Commits must not carry assistant attribution - no `Co-Authored-By` trailers for
 agents, no "Generated with" lines, no session links. CI checks commit messages,
 authors and the pull request description.
+
+A pull request is merged without squashing. One commit carries one step, and a
+step that can be reverted on its own is only worth the care while it is still
+there to revert.
