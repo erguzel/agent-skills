@@ -8,6 +8,8 @@ Exit code 1 on any failure. No third-party dependencies.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import subprocess
 import sys
 import tempfile
@@ -93,6 +95,62 @@ case("--list exits cleanly and shows every scenario",
 proc = subprocess.run([sys.executable, run_py, "S4"], capture_output=True, text=True)
 case("a scenario target prints its run order and does not pretend to run",
      proc.returncode != 0 and "Run order: S3 S4" in proc.stdout,
+     f"exit={proc.returncode}, stdout={proc.stdout.strip()!r}")
+
+# --affected: a tmp repository with the real SKILL.md and synthetic history.
+work = Path(tempfile.mkdtemp(prefix="va-test-affected-"))
+
+
+def git(*args: str) -> None:
+    subprocess.run(["git", *args], cwd=work, capture_output=True, text=True)
+
+
+skill_md = work / r.SKILL_MD_REL
+skill_md.parent.mkdir(parents=True)
+real_skill = (HERE.parent.parent / r.SKILL_MD_REL).read_text(encoding="utf-8")
+skill_md.write_text(real_skill, encoding="utf-8")
+git("init", "-q")
+git("config", "user.name", "Test Operator")
+git("config", "user.email", "operator@example.com")
+git("add", ".")
+git("commit", "-qm", "chore: base")
+
+case("no change selects nothing", r.changed_sections("HEAD", repo=work) == set())
+
+skill_md.write_text(real_skill.replace("40 KB", "48 KB"), encoding="utf-8")
+case("a section edit maps to its heading",
+     r.changed_sections("HEAD", repo=work) == {"Reading files"})
+out = io.StringIO()
+with contextlib.redirect_stdout(out):
+    affected = r.cmd_affected("HEAD", scenarios, repo=work)
+case("the covering scenarios are selected", affected == ["S1", "S13"], str(affected))
+case("known covers raise no warning", "warning" not in out.getvalue())
+
+skill_md.write_text(real_skill.replace("the human in the session",
+                                       "the human being in the session"),
+                    encoding="utf-8")
+case("an intro edit affects everything",
+     r.changed_sections("HEAD", repo=work) is None)
+out = io.StringIO()
+with contextlib.redirect_stdout(out):
+    affected = r.cmd_affected("HEAD", scenarios, repo=work)
+case("everything means every scenario", affected == list(scenarios))
+
+skill_md.write_text(real_skill, encoding="utf-8")
+fake = dict(scenarios)
+fake["S99"] = r.Scenario("S99", "Core", "fake", ["No such section"], {"steps": ["x"]})
+out = io.StringIO()
+with contextlib.redirect_stdout(out):
+    r.cmd_affected("HEAD", fake, repo=work)
+case("unknown covers sections are warned about",
+     "S99 covers unknown SKILL.md sections: No such section" in out.getvalue())
+rejects("a bad base is rejected",
+        lambda: r.changed_sections("no-such-ref", repo=work))
+
+proc = subprocess.run([sys.executable, run_py, "--affected", "HEAD"],
+                      capture_output=True, text=True)
+case("--affected against HEAD in this repository exits cleanly",
+     proc.returncode == 0 and "no changes" in proc.stdout,
      f"exit={proc.returncode}, stdout={proc.stdout.strip()!r}")
 
 print(f"{total - len(failures)}/{total} passed")

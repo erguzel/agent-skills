@@ -3,6 +3,7 @@
 
   python3 tests/vier-augen/run.py verify        the mechanical layer: hooks and guard
   python3 tests/vier-augen/run.py --list        the scenarios, their sets and chains
+  python3 tests/vier-augen/run.py --affected BASE   the scenarios a SKILL.md change affects
   python3 tests/vier-augen/run.py S10 S17       behaviour scenarios (selection only, for now)
 
 `verify` wraps the checks under Verify in the skill's README. It needs no agent
@@ -34,6 +35,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 SKILL = ROOT / "skills" / "vier-augen"
+SKILL_MD_REL = "skills/vier-augen/SKILL.md"
 
 SCENARIO = re.compile(r"^S\d{1,2}$", re.IGNORECASE)
 SETS = {"core", "comfort"}
@@ -135,6 +137,64 @@ def cmd_list(scenarios: dict[str, Scenario]) -> None:
         print(f"{s.id:<4} {s.set:<8} {s.title}{extra}")
         if s.covers:
             print(f"     covers {', '.join(s.covers)}")
+
+
+def changed_sections(base: str, repo: Path = ROOT) -> set[str] | None:
+    """The SKILL.md sections a diff against `base` touches; None means everything.
+
+    A hunk is mapped to the `## ` heading above it, on the old and the new side.
+    A hunk above the first heading - frontmatter or intro - affects everything.
+    """
+    diff = subprocess.run(["git", "diff", "-U0", base, "--", SKILL_MD_REL],
+                          cwd=repo, capture_output=True, text=True)
+    if diff.returncode != 0:
+        raise ValueError(f"git diff against {base!r} failed: {diff.stderr.strip()}")
+    if not diff.stdout.strip():
+        return set()
+    old = subprocess.run(["git", "show", f"{base}:{SKILL_MD_REL}"], cwd=repo,
+                         capture_output=True, text=True).stdout.splitlines()
+    new = (repo / SKILL_MD_REL).read_text(encoding="utf-8").splitlines()
+
+    def heading_at(lines: list[str], number: int) -> str | None:
+        for line in reversed(lines[:max(number, 1)]):
+            if line.startswith("## "):
+                return line[3:].strip()
+        return None
+
+    sections: set[str] = set()
+    for match in re.finditer(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@",
+                             diff.stdout, re.M):
+        for lines, start, count in ((old, match.group(1), match.group(2)),
+                                    (new, match.group(3), match.group(4))):
+            start, count = int(start), int(count or 1)
+            for number in range(start, start + max(count, 1)):
+                heading = heading_at(lines, number)
+                if heading is None:
+                    return None
+                sections.add(heading)
+    return sections
+
+
+def cmd_affected(base: str, scenarios: dict[str, Scenario],
+                 repo: Path = ROOT) -> list[str]:
+    """The scenarios whose Covers meet the sections changed against `base`."""
+    headings = {line[3:].strip() for line in
+                (repo / SKILL_MD_REL).read_text(encoding="utf-8").splitlines()
+                if line.startswith("## ")}
+    for s in scenarios.values():
+        unknown = [c for c in s.covers if c not in headings]
+        if unknown:
+            print(f"warning: {s.id} covers unknown SKILL.md sections: "
+                  f"{', '.join(unknown)}")
+    sections = changed_sections(base, repo)
+    if sections == set():
+        print(f"SKILL.md has no changes against {base}.")
+        return []
+    label = ("frontmatter or intro (every scenario)" if sections is None
+             else ", ".join(sorted(sections)))
+    print(f"Changed against {base}: {label}")
+    return [sid for sid, s in scenarios.items()
+            if sections is None or sections & set(s.covers)]
 
 
 class Report:
@@ -308,6 +368,9 @@ def main() -> None:
                         help="verify, or scenario ids (S10) and sets (core, comfort)")
     parser.add_argument("--list", action="store_true",
                         help="list the scenarios, their sets and chains")
+    parser.add_argument("--affected", metavar="BASE",
+                        help="select the scenarios covering SKILL.md sections "
+                             "changed against BASE")
     parser.add_argument("--only", action="store_true",
                         help="run only the named scenarios, not the sessions they continue")
     parser.add_argument("--keep", action="store_true",
@@ -320,6 +383,20 @@ def main() -> None:
         except ValueError as exc:
             sys.exit(str(exc))
         return
+    if args.affected:
+        if args.targets:
+            sys.exit("--affected selects its own scenarios; do not also name targets.")
+        try:
+            scenarios = load_scenarios()
+            affected = cmd_affected(args.affected, scenarios)
+        except ValueError as exc:
+            sys.exit(str(exc))
+        if not affected:
+            return
+        print("Affected: " + " ".join(affected))
+        print("Run order: " + " ".join(resolve(affected, scenarios, only=args.only)))
+        sys.exit("The scenarios are not runnable from here yet: the driver is not here. "
+                 "Until it is, tests/vier-augen/scenarios.md carries them for a hand-run.")
     targets = [t.lower() for t in args.targets]
     if not targets:
         parser.print_help()
