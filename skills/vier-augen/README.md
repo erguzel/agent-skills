@@ -277,8 +277,10 @@ Things to know:
   rules do not protect you there. The guard's force-push block still applies.
 - Rules and guard match command text. They cover the forms an agent usually
   writes, not every possible form, and are not a security boundary.
-- Other agents have their own permission systems. Adapters for them will follow
-  once those are researched; until then, levels 0, 1 and 3 apply.
+- Other agents have their own permission systems. An adapter for one lives in
+  `adapters/<agent>/` beside this one, and the behaviour tests reach it through
+  a profile of the same name; until an agent has both, levels 0, 1 and 3 apply
+  to it.
 
 Undo: remove the added `permissions` entries and the `PreToolUse` hook.
 `/permissions` in Claude Code shows the rules that are active.
@@ -376,6 +378,15 @@ them.
   outrank them; it only governs what the agent loads on its own initiative.
   When such instructions conflict with the skill, the agent is told to name the
   conflict and ask.
+- **The model underneath.** Level 0 is text, so it assumes a model that can
+  carry a four-thousand-token agreement across a whole session and act on it at
+  the right moment. A smaller or weaker model will drop parts of it, quietly.
+  Nothing in the skill can detect that. Where you cannot rely on the model,
+  lean on levels 1 and 2, which do not depend on it at all.
+- **Agents without a print mode.** The behaviour tests drive the agent headless.
+  An agent that has no such mode is still testable, with
+  `run.py --driver manual`, but then the steps are typed by a human: for those
+  agents "no manual work" is not true.
 
 ## Files
 
