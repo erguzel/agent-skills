@@ -80,7 +80,7 @@ def refused(proc: subprocess.CompletedProcess, message: str) -> tuple[bool, str]
     return True, ""
 
 
-def build_repo(root: Path) -> tuple[Path, Path]:
+def build_repo(root: Path) -> tuple[Path, Path, subprocess.CompletedProcess]:
     """A throwaway repository with the hooks installed, and a bare remote."""
     repo, remote = root / "repo", root / "remote.git"
     run(["git", "init", "-q", str(repo)], cwd=root)
