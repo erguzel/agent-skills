@@ -17,6 +17,11 @@ A proposed rule says whether it is Core or Comfort, and why, and comes with a
 scenario marked as such, block included. The measure is damage radius x
 silence; `tests/vier-augen/scenarios.md` defines both sets.
 
+A pull request owes the scenarios its own change touches, not the whole set:
+`python tests/vier-augen/run.py --affected origin/main` names them from the
+`SKILL.md` sections the diff touches. A release is the exception and owes the
+whole Core set.
+
 ## Before a pull request
 
 ```bash

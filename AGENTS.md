@@ -28,11 +28,17 @@ This repository publishes Agent Skills, one folder per skill under `skills/`.
 ## Behaviour scenarios
 
 - A change to what a rule in a skill's `SKILL.md` says needs the scenarios that
-  cover it, run by hand in an agent.
+  cover it: `python tests/vier-augen/run.py --affected <base>` names them from
+  the sections the diff touches, and `run.py <ids>` runs them. When it names
+  none, none are owed.
+- A release needs the whole Core set, plus any Comfort scenario covering what
+  the release touches. The subset above is for a single change; a release does
+  not get to skip.
+- The subset is only as good as the `Covers` lines it reads. A scenario whose
+  `Covers` is wrong drops out of the selection silently, so keep it honest when
+  you write one.
 - A new rule is Core or Comfort before it is written, and comes with a scenario
   marked as such, block included. `tests/vier-augen/scenarios.md` defines the
   two sets.
-- A release needs the Core set, plus any Comfort scenario covering what the
-  release touches.
 - Typo and formatting fixes that change no rule need none.
 - Run results are not kept in this repository.
