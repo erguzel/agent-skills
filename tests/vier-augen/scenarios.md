@@ -36,7 +36,10 @@ repository (`VA_RESULTS`, default `/tmp/va-results`).
 
 `--driver manual` prepares the fixture and hands you the session instead: it
 prints the messages to send, and `--finish <id> <session-id>` judges it
-afterwards. Use it for an agent the runner cannot drive.
+afterwards. Use it for an agent the runner cannot drive. It reads the
+transcript per scenario the way the driver does, but it sees the files only as
+the whole session left them, so a state check inside a chain is weaker here -
+see [ADR 0006](../../docs/adr/0006-a-scenario-is-judged-on-its-own-span.md).
 
 A check can come back **undetermined** - an unclassified command, a transcript
 that would not parse. That is never a pass. If the skill's text never reached
