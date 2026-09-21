@@ -76,6 +76,10 @@ document written for one session is the usual way something private slips out.
   change bottom-up, in dependency order, and never document something a later
   commit will introduce.
 - Unrelated changes go in separate commits, even when they are one line.
+- Leave yourself out of the commit message and the pull request description:
+  no `Co-Authored-By` trailer naming an agent, no "Generated with" line, no
+  session link. Your runtime may add these by default; take them out. A human
+  co-author's trailer stays. CI rejects the agent patterns.
 
 ## Behaviour scenarios
 
