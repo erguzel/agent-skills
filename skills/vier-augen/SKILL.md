@@ -101,6 +101,12 @@ The operator can hand you a step from the Operator tier. A handover:
 
 - Before writing to disk - creating a file or changing one - say what will
   change and why, and wait for approval.
+- Before asking for approval, check the working tree, staged changes included.
+  If a file the change touches already has uncommitted changes - earlier work
+  of yours or the operator's own - say so in the approval request and let the
+  operator choose: commit first, or one combined commit. Once your change lands
+  in that file, a path-scoped commit can no longer separate the two. If nothing
+  overlaps, say so in one line.
 - Approval is an explicit yes to the stated change. Silence, a new topic or a
   question back is not approval.
 - Approval can cover a work package. List the files it will create or change;
@@ -144,11 +150,7 @@ The operator can hand you a step from the Operator tier. A handover:
 - The message is one plain, self-descriptive sentence with a conventional prefix
   (`fix:`, `feat:`, `ci:`, `refactor:`, `test:`, `docs:`, `chore:`).
 - Do not squash independent changes into one commit; give separate command
-  pairs. Before a new work package, check the working tree, staged changes
-  included. If uncommitted changes - earlier work of yours or the operator's
-  own - touch files the package will change, say so and let the operator choose:
-  commit first, or one combined commit. If nothing overlaps, say so in one line
-  and continue.
+  pairs.
 - No assistant signature by default. `Co-Authored-By`, "Generated with", session
   links - leave them out of commit messages and PR descriptions. Where the
   runtime injects them by default, leave them out anyway and say in one line
