@@ -7,10 +7,12 @@ so. A decision taken along the way is recorded under `adr/`, not here.
 
 ## Now
 
-- **The Core baseline.** Every Core scenario, run in a live agent as one set,
-  for the first time. Each defect this finds in the runner becomes a test
-  case. Until it is done, no change to a rule in `SKILL.md` has a baseline to
-  be compared against.
+- **What the Core baseline found.** The first run of the whole Core set
+  showed three rules not holding: raising the operator's uncommitted work
+  before writing to the same file, taking a document that names a renamed
+  file into the change, and what counts as handing over a step that rewrites
+  published history. Each gets its own change to `SKILL.md` and its scenario,
+  measured by the scenarios that cover it.
 
 ## Next
 
@@ -18,9 +20,9 @@ so. A decision taken along the way is recorded under `adr/`, not here.
   own, and a `says` check can match a pattern in what the agent said; the
   prose of `expected` and `fail_if` is still read by a person. The judge adds
   the missing step - a model reading the transcript against that prose - and
-  a person is asked only for what comes back undetermined. Its design waits
-  on the baseline, which is the first body of transcripts to design against;
-  it gets a short specification before code.
+  a person is asked only for what comes back undetermined. The baseline's
+  transcripts are the first body to design it against; it gets a short
+  specification before code.
 - **A second agent.** A profile beside the Claude Code one, as a package with
   its own tests, and an adapter under the skill that wraps the shared
   classifier rather than copying it.
