@@ -5,9 +5,6 @@ shaped. The list is ordered, not dated: nothing here is a schedule or a
 promise, and an item moves when what was learned from the one before it says
 so. A decision taken along the way is recorded under `adr/`, not here.
 
-The repository stays private until the whole Core set of behaviour scenarios
-has been run in a live agent and reported.
-
 ## Now
 
 - **A neutral command classifier.** The harness borrows its classifier from
