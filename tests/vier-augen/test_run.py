@@ -260,6 +260,11 @@ case("a result file is written outside the repo", len(results) == 1)
 if results:
     data = json.loads(results[0].read_text(encoding="utf-8"))
     case("the result records S1", data["parts"]["S1"]["status"] == "pass")
+    case("the result records the model the transcript names",
+         data.get("model") == "fake-1", repr(data.get("model")))
+proc = drive(driver_env(work, marker), "--report")
+case("the report shows the recorded model",
+     "| S1 | pass |" in proc.stdout and "| fake-1 |" in proc.stdout, proc.stdout)
 
 work2 = Path(tempfile.mkdtemp(prefix="va-test-driver-"))
 proc = drive(driver_env(work2, marker, sabotage="rm"), "S1")
@@ -281,6 +286,27 @@ case("the fixture defaults to the path the documents name",
      str(r.FIXTURE) == "/tmp/va-fixture" and str(r.REMOTE) == "/tmp/va-fixture-remote.git",
      f"{r.FIXTURE}, {r.REMOTE}")
 case("results default outside the repository", str(r.RESULTS) == "/tmp/va-results")
+
+
+class _Unreadable:
+    NAME = "stub"
+
+    @staticmethod
+    def load_transcript(session_id, env):
+        return None
+
+
+case("an unreadable transcript gives no model rather than a guess",
+     r.session_model(_Unreadable, "x", {}) is None)
+_saved_results = r.RESULTS
+r.RESULTS = Path(tempfile.mkdtemp(prefix="va-test-results-"))
+try:
+    data = json.loads(r.save_results({}, _Unreadable, "abcdefgh", None)
+                      .read_text(encoding="utf-8"))
+    case("an unknown model is recorded as null, not left out",
+         "model" in data and data["model"] is None, repr(data))
+finally:
+    r.RESULTS = _saved_results
 
 # A chain must be judged scenario by scenario: a commit in the last one is not
 # the earlier ones' doing. This is what a live run got wrong before.

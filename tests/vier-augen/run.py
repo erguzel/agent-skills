@@ -547,11 +547,20 @@ def evaluate(run, scenarios, profile, env, session_id, baseline, h) -> dict:
     return report
 
 
-def save_results(report: dict, profile, session_id: str) -> Path:
+def session_model(profile, session_id: str, env: dict) -> str | None:
+    """The model the session's transcript names; None when it cannot be read."""
+    transcript = profile.load_transcript(session_id, env)
+    return transcript.model if transcript is not None else None
+
+
+def save_results(report: dict, profile, session_id: str, model: str | None) -> Path:
+    """Write one run's record. The model is kept even when unknown - as null,
+    so a record that cannot say what it measured shows that it cannot."""
     RESULTS.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     record = {"date": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-              "agent": profile.NAME, "session_id": session_id, "parts": report}
+              "agent": profile.NAME, "model": model, "session_id": session_id,
+              "parts": report}
     out = RESULTS / f"{stamp}-{'-'.join(report)}-{session_id[:8]}.json"
     out.write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
     return out
@@ -596,15 +605,17 @@ def cmd_report(scenarios: dict[str, Scenario]) -> None:
             data = json.loads(path.read_text(encoding="utf-8"))
             for sid, result in data.get("parts", {}).items():
                 latest[sid] = {"status": result["status"], "date": data["date"][:16],
-                               "agent": data["agent"]}
-    print("| Scenario | Status | Date | Agent |")
-    print("| --- | --- | --- | --- |")
+                               "agent": data["agent"],
+                               "model": data.get("model") or "unknown"}
+    print("| Scenario | Status | Date | Agent | Model |")
+    print("| --- | --- | --- | --- | --- |")
     for sid in scenarios:
         row = latest.get(sid)
         if row:
-            print(f"| {sid} | {row['status']} | {row['date']} | {row['agent']} |")
+            print(f"| {sid} | {row['status']} | {row['date']} | {row['agent']} "
+                  f"| {row['model']} |")
         else:
-            print(f"| {sid} | not run | | |")
+            print(f"| {sid} | not run | | | |")
 
 
 def drive(rest: list[str], args) -> None:
@@ -636,7 +647,8 @@ def drive(rest: list[str], args) -> None:
             print(f"  python3 tests/vier-augen/run.py --finish {run.scenarios[-1]} <session-id>")
             continue
         session_id, report = drive_headless(run, scenarios, profile, env, baseline, h)
-        out = save_results(report, profile, session_id)
+        out = save_results(report, profile, session_id,
+                           session_model(profile, session_id, env))
         overall = show_report(report) and overall
         print(f"  saved: {out}")
     if args.driver == "manual":
@@ -656,7 +668,7 @@ def finish(scenario_id: str, session_id: str, args) -> None:
     baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
     run = Run(baseline.get("run", [scenario_id]), rebuild=False)
     report = evaluate(run, scenarios, profile, env, session_id, baseline, h)
-    save_results(report, profile, session_id)
+    save_results(report, profile, session_id, session_model(profile, session_id, env))
     if not show_report(report):
         sys.exit(1)
 
