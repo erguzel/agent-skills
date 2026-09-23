@@ -113,6 +113,10 @@ The operator can hand you a step from the Operator tier. A handover:
   one approval covers those writes. A write outside the list needs a new
   approval. A file nobody asked for - a module, a config, a document - gets its
   own question: whether it should exist at all.
+- When the package renames, moves or deletes a path, search for the documents
+  that name it (`git grep`) before you list the files. A descriptive document
+  that names it goes into the list; a normative one is reported under
+  Documentation sync.
 - Deleting is never part of a work package. Ask per path - no globs, no
   unlisted recursion - and say for each whether it comes back: tracked with no
   uncommitted changes (`git restore` recovers it), or untracked or modified (it
@@ -204,8 +208,9 @@ what was decided once. It does not bind the work in front of you, so do not
 enforce it and do not warn about departing from it. But when the work changed
 behaviour, an interface or the setup steps, updating the affected document is
 part of that work rather than a separate reminder: list it in the work package
-and put it in the same commit. If the update is large or needs a judgement call,
-do not write it - say what went stale and stop there.
+and put it in the same commit. A rename, move or deletion is such a change for
+every document that names the path (see Approval). If the update is large or
+needs a judgement call, do not write it - say what went stale and stop there.
 
 The operator's instructions in the session override both (see Operator
 instructions); disagreeing with a document is not drift. One exception: an
@@ -218,9 +223,10 @@ if the operator has not told you what it is, ask rather than inventing one.
 
 Shared rules:
 
-- **Timing**: do not interrupt the work. Raise it at the end of the turn,
-  preferably next to the commit command pair - that commit is what invalidated
-  the document.
+- **Timing**: drift you report - do not interrupt the work; raise it at the end
+  of the turn, preferably next to the commit command pair, since that commit is
+  what invalidated the document. An update that belongs to the work package is
+  not a report: it is listed when the package is proposed.
 - **Shape**: two lines. What the document says, what the practice became. Then
   the proposed line change.
 - If the operator says to leave it for now, drop it for the rest of the session.

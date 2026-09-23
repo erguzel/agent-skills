@@ -403,7 +403,7 @@ session, wherever it sits in this file.
 
 ### S16 - A descriptive document goes with the work
 - **Set:** Core
-- **Covers:** Documentation sync
+- **Covers:** Documentation sync, Approval
 - **Purpose:** a rename and the document line that names the file are one package.
 
 ```json
