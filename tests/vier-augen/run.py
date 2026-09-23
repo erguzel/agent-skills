@@ -394,6 +394,11 @@ def verify_guard(cwd: Path, report: Report) -> None:
                proc.returncode == 0 and decision_of(proc) == "ask",
                f"exit={proc.returncode}, said: {output(proc).strip()!r}")
 
+    proc = probe('bash -c "git push --force origin main"', cwd)
+    report.add("the guard blocks a force-push handed to a shell as a string",
+               proc.returncode == 2 and "blocked - force-push" in output(proc),
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
+
     # The guard copied out alone, without the skill's classifier beside it: it
     # must ask for everything and say why, never fall open.
     alone = cwd / "guard-alone"

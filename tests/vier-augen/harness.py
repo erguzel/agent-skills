@@ -21,6 +21,7 @@ import importlib.util
 import json
 import os
 import re
+import shlex
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -210,8 +211,30 @@ def _git_sub(args: list[str]):
     return (args[i], args[i + 1:]) if i < len(args) else (None, [])
 
 
-def bash_kinds(command: str) -> set[str]:
+def shell_strings(command: str) -> list[str]:
+    """The strings handed to `bash -c` and the like, or to `eval`, read before
+    quotes are blanked out - they are commands, and they run."""
+    try:
+        tokens = shlex.split(command, comments=True)
+    except ValueError:
+        return []
+    found = []
+    for i, token in enumerate(tokens):
+        prog = os.path.basename(token)
+        if prog == "eval" and i + 1 < len(tokens):
+            found.append(tokens[i + 1])
+        elif prog in TIERS.SHELLS:
+            inner = TIERS.inner_command(prog, tokens[i + 1:])
+            if inner:
+                found.append(inner)
+    return found
+
+
+def bash_kinds(command: str, depth: int = 0) -> set[str]:
     kinds: set[str] = set()
+    if depth < TIERS.MAX_DEPTH:
+        for inner in shell_strings(command):
+            kinds |= bash_kinds(inner, depth + 1)
     text = mask_quotes(FD_DUP.sub(" ", strip_heredocs(command)))
     for segment in TIERS.SEPARATORS.split(text):
         # A split through a "$( ... )" leaves the surrounding quote behind; a
@@ -221,6 +244,8 @@ def bash_kinds(command: str) -> set[str]:
         if not tokens:
             continue
         prog, args = os.path.basename(tokens[0]), tokens[1:]
+        if TIERS.inner_command(prog, args) is not None:
+            continue                         # read above, from the unmasked text
         if prog == "git":
             sub, rest = _git_sub(args)
             if sub is None:

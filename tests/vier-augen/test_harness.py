@@ -12,6 +12,7 @@ Exit code 1 on any failure. Needs git. No third-party dependencies.
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -111,6 +112,30 @@ for command, want in [
          want in h.bash_kinds(command), str(h.bash_kinds(command)))
     case(f"a shell keyword does not hide {command!r} from the classifier",
          bool(h.TIERS.check_command(command)), str(h.TIERS.check_command(command)))
+
+# A command handed to a shell as a string runs all the same.
+for command, want in [
+    ('sh -c "rm x"', "delete"),
+    ('bash -lc "git push --force origin main"', "force_push"),
+    ('eval "rm x"', "delete"),
+    ('bash -c "cat f; git push --force origin main"', "force_push"),
+    ("bash -c \"bash -c 'rm x'\"", "delete"),
+]:
+    case(f"a shell string does not hide {command!r} from the tests",
+         want in h.bash_kinds(command), str(h.bash_kinds(command)))
+    case(f"a shell string does not hide {command!r} from the classifier",
+         bool(h.TIERS.check_command(command)), str(h.TIERS.check_command(command)))
+READ_ONLY = 'bash -c "cat f && git status"'
+case("a shell string that only reads stays free",
+     not h.bash_kinds(READ_ONLY) & h.MUTATING and not h.TIERS.check_command(READ_ONLY),
+     f"{sorted(h.bash_kinds(READ_ONLY))} {h.TIERS.check_command(READ_ONLY)}")
+case("a script run by a shell is not read as a string",
+     h.TIERS.inner_command("bash", ["script.sh"]) is None)
+DEEP = "git status"
+for _ in range(h.TIERS.MAX_DEPTH + 1):
+    DEEP = "bash -c " + shlex.quote(DEEP)
+case("a nesting too deep to read is asked about, not let through",
+     bool(h.TIERS.check_command(DEEP)), str(h.TIERS.check_command(DEEP)))
 
 case("a heredoc body is data, not commands",
      h.bash_kinds("cat <<EOF\nrm -rf /\nEOF") == {"read"})

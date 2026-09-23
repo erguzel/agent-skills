@@ -7,9 +7,9 @@ history, or it is neither. Translating that into a runtime's permission
 decisions is the adapter's job.
 
 It reads compound commands, the clauses of `if`, `for`, `while` and `case`,
-wrappers such as `sudo` and `env`, git's global options (`git -C dir push`) and
-git aliases. It is text matching, not a
-security boundary: a determined command can still evade it.
+the string that `bash -c` or `eval` runs, wrappers such as `sudo` and `env`,
+git's global options (`git -C dir push`) and git aliases. It is text matching,
+not a security boundary: a determined command can still evade it.
 
 No third-party dependencies.
 """
@@ -63,6 +63,10 @@ KEYWORDS = {"do", "then", "else", "elif", "if", "while", "until", "!", "{"}
 # Reserved words that are syntax on their own, or open a clause whose words are
 # not a command - the list after `for x in`, the subject of `case`.
 SYNTAX = {"for", "select", "case", "done", "fi", "esac", "}"}
+# Programs that run a command handed to them as a string.
+SHELLS = {"sh", "bash", "zsh", "dash", "ksh"}
+SHELL_C = re.compile(r"^-[A-Za-z]*c[A-Za-z]*$")
+MAX_DEPTH = 3
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
 
@@ -158,13 +162,38 @@ def check_gh(args):
     return (OPERATOR, f"gh {' '.join(args[:2])} may publish")
 
 
-def check_segment(segment):
+def inner_command(prog, args):
+    """The command a shell (`bash -c`) or `eval` runs from a string, or None."""
+    if prog == "eval":
+        return " ".join(args)
+    if prog in SHELLS:
+        for j, arg in enumerate(args):
+            if SHELL_C.match(arg):
+                if j + 1 >= len(args):
+                    return ""
+                # A quote left on the word means the segment was cut inside the
+                # string; what is left of the command is still read.
+                inner = args[j + 1]
+                return inner.strip("\"'") if inner[:1] in "\"'" else inner
+            if not arg.startswith("-"):
+                return None
+    return None
+
+
+def check_segment(segment, depth=0):
     """One simple command: (tier, reason) or None."""
     tokens = strip_prefix(words(segment))
     if not tokens:
         return None
     prog = os.path.basename(tokens[0])
     args = tokens[1:]
+    inner = inner_command(prog, args)
+    if inner is not None:
+        if depth >= MAX_DEPTH:
+            return (OPERATOR, f"{prog} nests commands too deep to read")
+        found = check_command(inner, depth + 1)
+        rewrites = [d for d in found if d[0] == REWRITE]
+        return (rewrites or found or [None])[0]
     if prog == "git":
         return check_git(args)
     if prog == "gh":
@@ -178,6 +207,6 @@ def check_segment(segment):
     return None
 
 
-def check_command(command):
+def check_command(command, depth=0):
     """Every simple command in a compound one: the list of (tier, reason)."""
-    return [d for d in map(check_segment, SEPARATORS.split(command)) if d]
+    return [d for d in (check_segment(s, depth) for s in SEPARATORS.split(command)) if d]
