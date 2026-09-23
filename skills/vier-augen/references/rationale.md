@@ -21,6 +21,12 @@ consequence when it happens. And it does not reach hooks: a hook is the
 operator's earlier, deliberate decision, and a later casual instruction should
 not undo it by accident.
 
+A step that rewrites published history sets a higher bar: naming it is not
+enough, the operator also says the agent runs it. "Force-push main" is as often
+shorthand for "give me the command" as an order, and what it destroys already
+sits in other people's clones. Of the two readings, the one that costs nothing
+when it is wrong is handing the command back.
+
 ## Why side effect is the sorting key
 
 Every "should I ask?" question collapses into one test: can the operator undo
