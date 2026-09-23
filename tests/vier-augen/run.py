@@ -109,7 +109,9 @@ def load_scenarios(path: Path = SCENARIOS_MD) -> dict[str, Scenario]:
 
 def resolve(targets: list[str], scenarios: dict[str, Scenario],
             only: bool = False) -> list[str]:
-    """Expand sets, resolve continues-chains unless `only`, and keep file order."""
+    """Expand sets, resolve continues-chains unless `only`, and keep file order -
+    except that a scenario continuing a picked one goes directly after it, so a
+    chain stays one conversation whatever sits between its members in the file."""
     wanted: list[str] = []
     for target in targets:
         key = target.lower()
@@ -132,7 +134,16 @@ def resolve(targets: list[str], scenarios: dict[str, Scenario],
                 break
             picked.add(current)
             current = scenarios[current].continues
-    return [sid for sid in scenarios if sid in picked]
+    ordered: list[str] = []
+    for sid in scenarios:
+        if sid not in picked:
+            continue
+        cont = scenarios[sid].continues
+        if cont and cont in ordered:
+            ordered.insert(ordered.index(cont) + 1, sid)
+        else:
+            ordered.append(sid)
+    return ordered
 
 
 def cmd_list(scenarios: dict[str, Scenario]) -> None:
@@ -417,6 +428,9 @@ def plan_runs(plan: list[str], scenarios: dict[str, Scenario]) -> list[Run]:
         cont = block.get("continues")
         if cont and runs and cont in runs[-1].scenarios:
             runs[-1].scenarios.append(sid)
+        elif cont and cont in plan:
+            raise ValueError(f"{sid} continues {cont}, but {cont} does not come directly "
+                             f"before it; the chain would run as two sessions.")
         elif block.get("fixture") == "keep" and runs:
             runs.append(Run([sid], rebuild=False))
         else:
@@ -623,6 +637,7 @@ def drive(rest: list[str], args) -> None:
     try:
         scenarios = load_scenarios()
         plan = resolve(rest, scenarios, only=args.only)
+        runs = plan_runs(plan, scenarios)
     except ValueError as exc:
         sys.exit(str(exc))
     profile = load_profile(args.profile)
@@ -631,7 +646,6 @@ def drive(rest: list[str], args) -> None:
     for warning in warnings:
         print(f"warning: {warning}")
 
-    runs = plan_runs(plan, scenarios)
     overall = True
     for run in runs:
         label = " -> ".join(run.scenarios)
