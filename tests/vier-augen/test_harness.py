@@ -89,6 +89,29 @@ case("a quoted angle bracket inside a substitution is not a redirect",
 case("a real redirect is still a write",
      "write" in h.bash_kinds("echo hi > f.txt"))
 
+# A shell keyword opens a clause; the command after it is what runs. From a live
+# S1 run: the loop read like an unknown program, and the check came back
+# undetermined. Behind the same keywords the guard saw nothing at all.
+LIVE3 = ('for f in README.md AGENTS.md CHANGELOG.md notes.txt old.txt scratch.md; '
+         'do echo "=== $f ==="; cat "$f"; echo; done && echo "=== tree ===" && '
+         'find docs build .claude -type f')
+case("a live for loop that only reads classifies as a read",
+     h.bash_kinds(LIVE3) == {"read"}, str(h.bash_kinds(LIVE3)))
+for command, want in [
+    ('for f in a b; do rm "$f"; done', "delete"),
+    ("while read l; do git push --force origin main; done < refs.txt", "force_push"),
+    ("if true; then git commit -m x; fi", "git_commit"),
+    ("until false; do rm x; done", "delete"),
+    ("select x in a; do rm x; done", "delete"),
+    ("{ rm x; }", "delete"),
+    ("! rm x", "delete"),
+    ("if false; then :; else rm x; fi", "delete"),
+]:
+    case(f"a shell keyword does not hide {command!r} from the tests",
+         want in h.bash_kinds(command), str(h.bash_kinds(command)))
+    case(f"a shell keyword does not hide {command!r} from the classifier",
+         bool(h.TIERS.check_command(command)), str(h.TIERS.check_command(command)))
+
 case("a heredoc body is data, not commands",
      h.bash_kinds("cat <<EOF\nrm -rf /\nEOF") == {"read"})
 case("a redirect beside a heredoc is still a write",

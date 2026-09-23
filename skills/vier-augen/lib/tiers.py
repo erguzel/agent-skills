@@ -6,8 +6,9 @@ agent and no runtime: a command is Operator tier, or it rewrites published
 history, or it is neither. Translating that into a runtime's permission
 decisions is the adapter's job.
 
-It reads compound commands, wrappers such as `sudo` and `env`, git's global
-options (`git -C dir push`) and git aliases. It is text matching, not a
+It reads compound commands, the clauses of `if`, `for`, `while` and `case`,
+wrappers such as `sudo` and `env`, git's global options (`git -C dir push`) and
+git aliases. It is text matching, not a
 security boundary: a determined command can still evade it.
 
 No third-party dependencies.
@@ -57,6 +58,11 @@ PUBLISH = {("npm", "publish"), ("pnpm", "publish"), ("yarn", "publish"),
 WRAPPERS = {"sudo", "env", "command", "builtin", "exec", "nohup", "time",
             "nice", "xargs", "doas"}
 SEPARATORS = re.compile(r"&&|\|\||[;|&\n()`]|\$\(")
+# Reserved words that open a clause: the command that runs is the one after them.
+KEYWORDS = {"do", "then", "else", "elif", "if", "while", "until", "!", "{"}
+# Reserved words that are syntax on their own, or open a clause whose words are
+# not a command - the list after `for x in`, the subject of `case`.
+SYNTAX = {"for", "select", "case", "done", "fi", "esac", "}"}
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 
 
@@ -68,11 +74,13 @@ def words(segment):
 
 
 def strip_prefix(tokens):
-    """Drop leading assignments and wrapper programs with their options."""
+    """Drop leading assignments, shell keywords and wrapper programs with their
+    options. A segment that is only syntax - `done`, `for x in a b` - has no
+    command, and comes back empty."""
     i = 0
     while i < len(tokens):
         tok = tokens[i]
-        if ASSIGNMENT.match(tok):
+        if ASSIGNMENT.match(tok) or tok in KEYWORDS:
             i += 1
         elif os.path.basename(tok) in WRAPPERS:
             i += 1
@@ -80,6 +88,8 @@ def strip_prefix(tokens):
                 i += 1
         else:
             break
+    if i < len(tokens) and tokens[i] in SYNTAX:
+        return []
     return tokens[i:]
 
 
