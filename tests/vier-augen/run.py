@@ -384,6 +384,21 @@ def verify_guard(cwd: Path, report: Report) -> None:
                "two of the three probes came back with the same answer - check that "
                "python3 is there and that the guard's path resolves.")
 
+    proc = probe("while read l; do git push --force origin main; done < refs.txt", cwd)
+    report.add("the guard blocks a force-push inside a loop",
+               proc.returncode == 2 and "blocked - force-push" in output(proc),
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
+
+    proc = probe('for f in a b; do rm "$f"; done', cwd)
+    report.add("the guard asks for a deletion inside a loop",
+               proc.returncode == 0 and decision_of(proc) == "ask",
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
+
+    proc = probe('bash -c "git push --force origin main"', cwd)
+    report.add("the guard blocks a force-push handed to a shell as a string",
+               proc.returncode == 2 and "blocked - force-push" in output(proc),
+               f"exit={proc.returncode}, said: {output(proc).strip()!r}")
+
     # The guard copied out alone, without the skill's classifier beside it: it
     # must ask for everything and say why, never fall open.
     alone = cwd / "guard-alone"

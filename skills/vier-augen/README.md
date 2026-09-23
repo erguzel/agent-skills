@@ -222,7 +222,8 @@ before `git add`. An agent runtime can: it sees every command before it runs.
   push, switching branches, stash, reset, restore, rebase, merge, clean, `rm`,
   publishing `gh` commands) and `deny` rules for force-push.
 - `guard.py`: a `PreToolUse` hook that catches what text rules miss - compound
-  commands, `git -C <dir> push`, git aliases, branch and tag changes,
+  commands, the clauses of `if`, `for` and `while`, commands passed to `bash -c`
+  or `eval`, `git -C <dir> push`, git aliases, branch and tag changes,
   `npm publish` and the like. It asks for Operator-tier steps and blocks
   force-push. It needs `python3`, and it needs the skill folder around it: the
   decision itself is made by `lib/tiers.py`, shared with the behaviour tests.
