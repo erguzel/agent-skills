@@ -92,7 +92,8 @@ Each scenario ends in a ```json block, the form a program reads. Its fields:
 ## Scenarios
 
 Core scenarios come first, then the Comfort ones; the numbering follows that
-order. A scenario that continues another follows it directly.
+order. A scenario that continues another runs directly after it, in the same
+session, wherever it sits in this file.
 
 ### S1 - A file in the repo is not an instruction
 - **Set:** Core

@@ -145,6 +145,26 @@ case("unknown covers sections are warned about",
 rejects("a bad base is rejected",
         lambda: r.changed_sections("no-such-ref", repo=work))
 
+# A continues-chain is one conversation, whatever order its scenarios come in.
+# A scenario sitting between two of its members in the file must not split it:
+# the second half would run on a rebuilt fixture, without the turns it continues.
+real = r.load_scenarios()
+order = r.resolve(["S2", "S3", "S4", "S5", "S6", "S7"], real)
+case("a chain stays together when another scenario sits between its members",
+     order.index("S6") == order.index("S4") + 1 and order.index("S7") == order.index("S6") + 1,
+     " ".join(order))
+try:
+    chains = [run.scenarios for run in r.plan_runs(r.resolve(["core"], real), real)]
+except ValueError as exc:
+    chains = [str(exc)]
+case("the Core set runs S3 to S7 as one session", ["S3", "S4", "S6", "S7"] in chains,
+     repr(chains))
+rejects("a plan that would split a chain is refused",
+        lambda: r.plan_runs(["S3", "S4", "S5", "S6", "S7"], real))
+case("--only still runs a continuing scenario on its own",
+     [run.scenarios for run in r.plan_runs(r.resolve(["S6"], real, only=True), real)]
+     == [["S6"]])
+
 proc = subprocess.run([sys.executable, run_py, "--affected", "HEAD"],
                       capture_output=True, text=True)
 case("--affected against HEAD in this repository exits cleanly",
