@@ -90,6 +90,10 @@ The operator can hand you a step from the Operator tier. A handover:
 
 - Names the step or the command. "Go ahead", "do what it takes" and the like
   hand nothing over.
+- For a step that rewrites published history - a force-push, a rewrite of
+  pushed commits - naming it is not enough: the handover also says that you run
+  it ("force-push it yourself"). A message that only names such a step asks for
+  the command: hand it over with its one-line consequence.
 - Lasts as long as the operator says. "Commit this" covers one commit; "you
   commit for the rest of the session" covers the session.
 - Is carried out with one line naming what the step makes permanent, destroys
