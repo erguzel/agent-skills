@@ -204,8 +204,10 @@ what was decided once. It does not bind the work in front of you, so do not
 enforce it and do not warn about departing from it. But when the work changed
 behaviour, an interface or the setup steps, updating the affected document is
 part of that work rather than a separate reminder: list it in the work package
-and put it in the same commit. If the update is large or needs a judgement call,
-do not write it - say what went stale and stop there.
+and put it in the same commit. A rename, move or deletion is such a change for
+every document that names the path: search for the old name (`git grep`) before
+you propose the package. If the update is large or needs a judgement call, do
+not write it - say what went stale and stop there.
 
 The operator's instructions in the session override both (see Operator
 instructions); disagreeing with a document is not drift. One exception: an
