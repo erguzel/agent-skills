@@ -619,12 +619,9 @@ def steps_text(run, scenarios, invoke) -> str:
     return "\n".join(lines)
 
 
-def agent_env(isolated: bool) -> dict:
+def agent_env(profile, isolated: bool) -> dict:
     env = dict(os.environ)
-    if isolated:
-        env["CLAUDE_CONFIG_DIR"] = str(Path(tempfile.gettempdir()) / "va-agent-config")
-        Path(env["CLAUDE_CONFIG_DIR"]).mkdir(exist_ok=True)
-    return env
+    return profile.isolate(env, Path(tempfile.gettempdir())) if isolated else env
 
 
 def cmd_report(scenarios: dict[str, Scenario]) -> None:
@@ -656,7 +653,7 @@ def drive(rest: list[str], args) -> None:
     except ValueError as exc:
         sys.exit(str(exc))
     profile = load_profile(args.profile)
-    env = agent_env(args.isolated)
+    env = agent_env(profile, args.isolated)
     _, warnings, config = profile.preflight(env)
     for warning in warnings:
         print(f"warning: {warning}")
@@ -690,7 +687,7 @@ def finish(scenario_id: str, session_id: str, args) -> None:
     h = _harness()
     scenarios = load_scenarios()
     profile = load_profile(args.profile)
-    env = agent_env(args.isolated)
+    env = agent_env(profile, args.isolated)
     baseline_path = FIXTURE / ".git" / "va-baseline.json"
     if not baseline_path.is_file():
         sys.exit(f"no baseline at {baseline_path}; run --driver manual first.")
