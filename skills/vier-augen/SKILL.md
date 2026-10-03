@@ -159,6 +159,9 @@ The operator can hand you a step from the Operator tier. A handover:
 - Before handing over the pair, compare its `git add` list with the files of the
   approved package, and say in one line any path that is in one and not the
   other. A file nobody listed does not ride along.
+- Give every command as one line in a code block, never split with a backslash,
+  so it can be pasted as it stands. This holds in dialogue as well as in
+  documents.
 - Never write a credential, token, key, real hostname or personal path into a
   file - not as a default, an example, or a placeholder that looks real. Read
   them from the environment or from a file the repo ignores, and name what the
