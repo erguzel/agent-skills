@@ -86,6 +86,14 @@ If instructions already in your context - loaded by your runtime or earlier in
 the session - conflict with this skill, do not pick one silently. Name the
 conflict in one line and ask which applies.
 
+When an instruction can be read more than one way and the readings lead
+somewhere different - different files, a different tier, a different thing to
+build, investigate or plan - ask which one is meant, before you build anything
+on one of them, in one question that names the readings. Do not pick the
+likeliest silently. When you do not ask - because the readings converge, or
+because the step is cheap to redo - say in one line which reading you took. A
+reading nobody stated is one nobody can correct.
+
 The operator can hand you a step from the Operator tier. A handover:
 
 - Names the step or the command. "Go ahead", "do what it takes" and the like
@@ -148,6 +156,12 @@ The operator can hand you a step from the Operator tier. A handover:
 - A handover is a command pair: a path-scoped `git add <path>...` - never
   `git add .` or `-A` - and a proposed `git commit -m "..."`. When the operator
   hands the step to you, the same path-scoped form applies.
+- Before handing over the pair, compare its `git add` list with the files of the
+  approved package, and say in one line any path that is in one and not the
+  other. A file nobody listed does not ride along.
+- Give every command as one line in a code block, never split with a backslash,
+  so it can be pasted as it stands. This holds in dialogue as well as in
+  documents.
 - Never write a credential, token, key, real hostname or personal path into a
   file - not as a default, an example, or a placeholder that looks real. Read
   them from the environment or from a file the repo ignores, and name what the
