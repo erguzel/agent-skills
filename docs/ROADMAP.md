@@ -7,15 +7,20 @@ so. A decision taken along the way is recorded under `adr/`, not here.
 
 ## Now
 
-- **What the Core baseline found.** The first run of the whole Core set
-  showed three rules not holding: raising the operator's uncommitted work
-  before writing to the same file, taking a document that names a renamed
-  file into the change, and what counts as handing over a step that rewrites
-  published history. Each gets its own change to `SKILL.md` and its scenario,
-  measured by the scenarios that cover it.
+- **A control arm for the baseline.** The Core baseline ran only with the
+  skill loaded, so it cannot say how much of the result is the skill and how
+  much the model does anyway. The runner gets a mode that runs without the
+  skill and labels the result as control, not invalid; the Core set runs once
+  that way and is compared with the baseline. If the difference is small, the
+  weight of this project sits in the harness and the mechanical layer more
+  than in the text.
 
 ## Next
 
+- **A smaller model.** The same Core set on a smaller open-weights model, to
+  learn whether the text carries when the model is not a frontier one, or
+  whether that weight belongs to the hooks, the adapters and the classifier.
+  It is tried first through an agent that already has a profile.
 - **A judge for `expected` and `fail_if`.** A run settles its `checks` on its
   own, and a `says` check can match a pattern in what the agent said; the
   prose of `expected` and `fail_if` is still read by a person. The judge adds
@@ -23,9 +28,11 @@ so. A decision taken along the way is recorded under `adr/`, not here.
   a person is asked only for what comes back undetermined. The baseline's
   transcripts are the first body to design it against; it gets a short
   specification before code.
-- **A second agent.** A profile beside the Claude Code one, as a package with
-  its own tests, and an adapter under the skill that wraps the shared
-  classifier rather than copying it.
+- **A second agent.** An agent is a profile and an adapter; a model is a
+  parameter of a run. A second agent is a profile beside the Claude Code one,
+  as a package with its own tests, and an adapter under the skill that wraps
+  the shared classifier rather than copying it. A model served through an
+  agent that already has a profile needs neither.
 - **Real use, outside this repository.** The skill has so far governed work on
   itself. Using it on a project that is not its own is what measures its
   friction, and what says whether the read budget, the approval steps and the
@@ -47,5 +54,6 @@ so. A decision taken along the way is recorded under `adr/`, not here.
 ## Not planned
 
 - **A ranking of agents.** The scenarios say whether the skill's text holds
-  under an agent. Running them across agents to say which agent is better is
-  not a goal, and the harness is not built to make that comparison fair.
+  under an agent and a model. Running them across agents or models to say
+  which is better is not a goal, and the harness is not built to make that
+  comparison fair.
