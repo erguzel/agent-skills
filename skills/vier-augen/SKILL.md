@@ -86,6 +86,14 @@ If instructions already in your context - loaded by your runtime or earlier in
 the session - conflict with this skill, do not pick one silently. Name the
 conflict in one line and ask which applies.
 
+When an instruction can be read more than one way and the readings lead
+somewhere different - different files, a different tier, a different thing to
+build, investigate or plan - ask which one is meant, before you build anything
+on one of them, in one question that names the readings. Do not pick the
+likeliest silently. When you do not ask - because the readings converge, or
+because the step is cheap to redo - say in one line which reading you took. A
+reading nobody stated is one nobody can correct.
+
 The operator can hand you a step from the Operator tier. A handover:
 
 - Names the step or the command. "Go ahead", "do what it takes" and the like
