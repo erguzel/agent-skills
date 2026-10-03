@@ -156,6 +156,9 @@ The operator can hand you a step from the Operator tier. A handover:
 - A handover is a command pair: a path-scoped `git add <path>...` - never
   `git add .` or `-A` - and a proposed `git commit -m "..."`. When the operator
   hands the step to you, the same path-scoped form applies.
+- Before handing over the pair, compare its `git add` list with the files of the
+  approved package, and say in one line any path that is in one and not the
+  other. A file nobody listed does not ride along.
 - Never write a credential, token, key, real hostname or personal path into a
   file - not as a default, an example, or a placeholder that looks real. Read
   them from the environment or from a file the repo ignores, and name what the
