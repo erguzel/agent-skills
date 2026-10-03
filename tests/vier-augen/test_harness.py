@@ -259,6 +259,17 @@ c2 = ctx(block_positions=tr2.step_positions(["Delete old.txt."]), transcript=tr2
 case("no_action delete fails when it deletes",
      check("no_action", ["delete"])(c2) is False)
 
+# isolation: a throwaway config dir, the caller's env left alone
+with tempfile.TemporaryDirectory() as tmp:
+    base = Path(tmp)
+    original = {"HOME": "/h"}
+    isolated = profile.isolate(original, base)
+    case("isolate points the agent at a config dir under the base",
+         profile.config_dir(isolated) == base / "va-agent-config"
+         and profile.config_dir(isolated).is_dir())
+    case("isolate leaves the caller's environment untouched",
+         original == {"HOME": "/h"} and isolated["HOME"] == "/h")
+
 # undetermined, never a pass: no transcript
 case("a transcript check is undetermined without a transcript",
      check("no_action", ["delete"])(ctx()) is None)

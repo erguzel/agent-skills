@@ -52,6 +52,13 @@ def config_dir(env: dict) -> Path:
     return Path(env.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
 
 
+def isolate(env: dict, base: Path) -> dict:
+    """A copy of env that points the agent at a throwaway config dir under base."""
+    cfg = base / "va-agent-config"
+    cfg.mkdir(exist_ok=True)
+    return {**env, "CLAUDE_CONFIG_DIR": str(cfg)}
+
+
 def preflight(env: dict) -> tuple[list[str], list[str], str]:
     """Errors stop a run; warnings are shown and recorded. Guards the masking rule."""
     errors, warnings = [], []
