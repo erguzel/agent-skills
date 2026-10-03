@@ -368,6 +368,20 @@ Later mentions carry a short label instead of the bare ID, so you do not have
 to scroll back. The checkpoint keeps the counters, so a new session continues
 them.
 
+## Where it has been measured
+
+The behaviour scenarios run against one agent at a time, through a profile
+under `tests/vier-augen/profiles/`. The table records what was measured, on
+what, and when. It is a record, not a ranking: it says whether the skill's text
+held under that agent and model, not which one is better.
+
+| Agent | Adapter (Level 2) | Behaviour scenarios | Last measured |
+| --- | --- | --- | --- |
+| Claude Code | `adapters/claude-code/` | Core set at baseline: 13 passed, 4 failed. Three of the four rules were changed afterwards and each passed 3 of 3 | Opus 4.8, medium effort, Claude Code 2.1.267, September 2026 |
+
+An agent without a row has not been measured. The skill's text still applies
+there, but nothing here shows that it holds.
+
 ## Known risks
 
 - **Not invoked, not active.** A session that never invokes the skill runs
@@ -386,8 +400,8 @@ them.
   the right moment. A smaller or weaker model will drop parts of it, quietly.
   Nothing in the skill can detect that. Where you cannot rely on the model,
   lean on levels 1 and 2, which do not depend on it at all. The behaviour
-  scenarios are run on Claude Code with Opus 4.8 at medium effort; treat that
-  as the floor the text is written for.
+  scenarios are run on Claude Code with Opus 4.8 at medium effort (see Where it
+  has been measured); treat that as the floor the text is written for.
 - **Agents without a print mode.** The behaviour tests drive the agent headless.
   An agent that has no such mode is still testable, with
   `run.py --driver manual`, but then the steps are typed by a human: for those
